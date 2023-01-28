@@ -1,12 +1,17 @@
 <script lang="ts" setup>
+import {reactive, ref} from "vue";
+import {localizeDate} from "../mixins/utils";
+import {Todo} from "../mixins/types";
+import {useVuelidate} from "@vuelidate/core";
+import {helpers, required} from "@vuelidate/validators";
 
 // Properties declaration
 const props = defineProps<{
   listIndex: number,
-  todosData: any
+  todosData: Todo[]
 }>();
 // Emits declaration
-const emit = defineEmits(["deleteTodo", "doneTodo"]);
+const emit = defineEmits(["deleteTodo", "createTodo", "isEditingTodo", "updateTodo", "doneTodo"]);
 
 // Emits for todos
 const deleteTodo = (listIndex: number, todoIndex: number) => {
@@ -14,16 +19,25 @@ const deleteTodo = (listIndex: number, todoIndex: number) => {
 };
 
 const createTodo = (listIndex: number) => {
-  // props.todosData.push({
-  //   "title": "Add more functionalities to app",
-  //   "content": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
-  //   "deadline": "1.2.2023",
-  //   "is_editing_list": false
-  // });
+  emit("createTodo", listIndex);
+};
+
+const todoInputs = ref(props.todosData);
+
+const isEditingTodo = (listIndex: number, todoIndex: number) => {
+  emit("isEditingTodo", {
+    listIndex: listIndex,
+    todoIndex: todoIndex,
+    is_editing_todo: !props.todosData[todoIndex].is_editing_todo
+  });
 };
 
 const updateTodo = (listIndex: number, todoIndex: number) => {
-  // props.todosData[todoIndex].content = "New title";
+  emit("updateTodo", {
+    listIndex: listIndex,
+    todoIndex: todoIndex,
+    newTodo: todoInputs.value[todoIndex]
+  });
 };
 
 const toggleDoneTodo = (listIndex: number, todoIndex: number) => {
@@ -33,16 +47,90 @@ const toggleDoneTodo = (listIndex: number, todoIndex: number) => {
     is_done_todo: !props.todosData[todoIndex].is_done_todo
   });
 };
+
+// Validations
+const rules = {
+  collection: {
+    $each: helpers.forEach({
+      title: {
+        required
+      },
+      deadline: {
+        required
+      }
+    })
+  }
+};
+const state = reactive({
+  collection: props.todosData
+});
+const v$ = useVuelidate(rules, state);
+const handleSubmit = async (listIndex: number, todoIndex: number) => {
+  const isValid = await v$.value.$validate();
+
+  if (!isValid) {
+    return;
+  }
+
+  updateTodo(listIndex, todoIndex);
+};
 </script>
 
 <template>
-  <div v-for="(todo, todoIndex) in todosData" :key="todo" class="flex flex-column bg-white-alpha-30 m-3">
-    <div class="p-3">
-      <h3>{{ todo?.title }}</h3>
-      <p>{{ todo?.content }}</p>
-      <p>{{ todo?.deadline }}</p>
+  <div
+      v-for="(todo, todoIndex) in todosData" :key="todo"
+      :class="{
+        errorTitle: v$.collection.$each.$response.$errors[todoIndex].title.length,
+        errorDeadline: v$.collection.$each.$response.$errors[todoIndex].deadline.length
+      }"
+      :style="todosData[todoIndex].is_done_todo ? 'box-shadow: 0px -10px 0px darkgreen;' : ''"
+      class="flex flex-column bg-white-alpha-30 border-round-xl m-3">
+    <div v-if="todosData[todoIndex].is_editing_todo" class="flex flex-column p-3">
+      <label
+          :class="{'p-error':v$.collection.$each.$response.$errors[todoIndex].title.length}"
+          for="title">Title*</label>
+      <InputText
+          id="title"
+          v-model="todoInputs[todoIndex].title"
+          :class="{'p-invalid':v$.collection.$each.$response.$errors[todoIndex].title.length}"
+          placeholder="Add title for todo"
+          type="text"/>
+      <div v-for="error in v$.collection.$each.$response.$errors[todoIndex].title" :key="error" class="p-error">
+        {{ error.$message.replace('Value', 'Title') }}
+      </div>
+      <div class="flex flex-column my-3">
+        <label for="content">Content</label>
+        <TheTextarea
+            id="content"
+            v-model="todoInputs[todoIndex].content" :auto-resize="true" cols="30"
+            placeholder="Add content for todo" rows="5"/>
+      </div>
+      <label
+          :class="{'p-error':v$.collection.$each.$response.$errors[todoIndex].deadline.length}"
+          for="deadline">Deadline*</label>
+      <TheCalendar
+          id="deadline"
+          v-model="todoInputs[todoIndex].deadline"
+          :class="{'p-invalid':v$.collection.$each.$response.$errors[todoIndex].deadline.length}" date-format="dd.mm.yy"
+          placeholder="Add deadline for todo"/>
+      <div v-for="error in v$.collection.$each.$response.$errors[todoIndex].deadline" :key="error" class="p-error">
+        {{ error.$message.replace('Value', 'Deadline') }}
+      </div>
     </div>
-    <div class="flex align-items-center p-3">
+    <div v-else class="flex flex-column p-3">
+      <h3>{{ todo?.title }}</h3>
+      <p class="my-3">{{ todo?.content }}</p>
+      <p>{{ localizeDate(todo?.deadline) }}</p>
+    </div>
+    <div v-if="todosData[todoIndex].is_editing_todo" class="flex align-items-center p-3">
+      <i
+          class="pi pi-check cursor-pointer" style="color: darkgreen"
+          @click="handleSubmit(listIndex, todoIndex)"></i>
+      <i
+          class="pi pi-times cursor-pointer mx-3" style="color: darkred"
+          @click="deleteTodo(listIndex, todoIndex)"></i>
+    </div>
+    <div v-else class="flex align-items-center p-3">
       <i
           v-if="!todo?.is_done_todo" class="pi pi-check cursor-pointer" style="color: darkgreen"
           @click="toggleDoneTodo(listIndex, todoIndex)"></i>
@@ -51,7 +139,7 @@ const toggleDoneTodo = (listIndex: number, todoIndex: number) => {
           @click="toggleDoneTodo(listIndex, todoIndex)"></i>
       <i
           class="pi pi-pencil mx-3 cursor-pointer" style="color: darkblue"
-          @click="updateTodo(listIndex, todoIndex)"></i>
+          @click="isEditingTodo(listIndex, todoIndex)"></i>
       <i
           class="pi pi-trash red cursor-pointer" style="color: darkred"
           @click="deleteTodo(listIndex, todoIndex)"></i>
