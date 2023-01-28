@@ -1,0 +1,40 @@
+{
+  "title": "Board1",
+  "lists": [
+    {
+      "name": "Todo",
+      "is_editing_list": false,
+      "is_adding_todo": false,
+      "todos": [
+        {
+          "title": "Create todo app in vue for amcef",
+          "content": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
+          "deadline": "1.2.2023",
+          "is_editing_todo": false,
+          "is_done_todo": false
+        },
+        {
+          "title": "Create initial commit",
+          "content": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
+          "deadline": "1.2.2023",
+          "is_editing_todo": false,
+          "is_done_todo": false
+        }
+      ]
+    },
+    {
+      "name": "Current Week's sprint",
+      "is_editing_list": false,
+      "is_adding_todo": false,
+      "todos": [
+        {
+          "title": "Add more functionalities to app",
+          "content": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
+          "deadline": "1.2.2023",
+          "is_editing_todo": false,
+          "is_done_todo": false
+        }
+      ]
+    }
+  ]
+}
