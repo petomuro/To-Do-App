@@ -12,6 +12,24 @@ const props = defineProps<{
 // Emits declaration
 const emit = defineEmits(["deleteList", "createList", "isEditingList", "updateList", "deleteTodo", "createTodo", "isEditingTodo", "updateTodo", "doneTodo"]);
 
+// Validations
+const rules = {
+  collection: {
+    $each: helpers.forEach({
+      name: {
+        required
+      },
+    })
+  }
+};
+const state = reactive({
+  collection: props.listsData
+});
+const v$ = useVuelidate(rules, state);
+const handleSubmit = async () => {
+  return await v$.value.$validate();
+};
+
 // Emits for lists
 const deleteList = (listIndex: number) => {
   emit("deleteList", listIndex);
@@ -22,19 +40,25 @@ const createList = () => {
 };
 
 const isEditingList = (listIndex: number) => {
-  emit("isEditingList", {
-    listIndex: listIndex,
-    is_editing_list: !props.listsData[listIndex].is_editing_list
-  });
+  if (props.listsData[listIndex].is_adding_list) {
+    deleteList(listIndex);
+  } else {
+    emit("isEditingList", {
+      listIndex: listIndex,
+      is_editing_list: !props.listsData[listIndex].is_editing_list
+    });
+  }
 };
 
 const listInputs = ref(props.listsData);
 
-const updateList = (listIndex: number) => {
-  emit("updateList", {
-    listIndex: listIndex,
-    newList: listInputs.value[listIndex]
-  });
+const updateList = async (listIndex: number) => {
+  if (await handleSubmit()) {
+    emit("updateList", {
+      listIndex: listIndex,
+      newList: listInputs.value[listIndex]
+    });
+  }
 };
 
 // Emits for todos
@@ -57,30 +81,6 @@ const updateTodo = (e: any) => {
 const toggleDoneTodo = (e: any) => {
   emit("doneTodo", e);
 };
-
-// Validations
-const rules = {
-  collection: {
-    $each: helpers.forEach({
-      name: {
-        required
-      },
-    })
-  }
-};
-const state = reactive({
-  collection: props.listsData
-});
-const v$ = useVuelidate(rules, state);
-const handleSubmit = async (listIndex: number) => {
-  const isValid = await v$.value.$validate();
-
-  if (!isValid) {
-    return;
-  }
-
-  updateList(listIndex);
-};
 </script>
 
 <template>
@@ -91,7 +91,7 @@ const handleSubmit = async (listIndex: number) => {
       }"
       class="flex flex-column bg-white-alpha-20 border-round-xl m-3">
     <div class="flex justify-content-between">
-      <div v-if="listsData[listIndex].is_editing_list" class="p-3">
+      <div v-if="listsData[listIndex].is_editing_list" class="flex flex-column p-3">
         <label
             :class="{'p-error':v$.collection.$each.$response.$errors[listIndex].name.length}"
             for="name">Name*</label>
@@ -101,11 +101,11 @@ const handleSubmit = async (listIndex: number) => {
         </div>
       </div>
       <div v-else class="p-3">
-        <h2>{{ list?.name }}</h2>
+        <h2 class="cursor-pointer" @click="isEditingList(listIndex)">{{ list?.name }}</h2>
       </div>
       <div v-if="listsData[listIndex].is_editing_list" class="flex align-items-center p-3">
-        <i class="pi pi-check mx-3 cursor-pointer" style="color: darkgreen" @click="handleSubmit(listIndex)"></i>
-        <i class="pi pi-times cursor-pointer" style="color: darkred" @click="deleteList(listIndex)"></i>
+        <i class="pi pi-check mx-3 cursor-pointer" style="color: darkgreen" @click="updateList(listIndex)"></i>
+        <i class="pi pi-times cursor-pointer" style="color: darkred" @click="isEditingList(listIndex)"></i>
       </div>
       <div v-else class="flex align-items-center p-3">
         <i class="pi pi-pencil mx-3 cursor-pointer" style="color: darkblue" @click="isEditingList(listIndex)"></i>
@@ -113,7 +113,8 @@ const handleSubmit = async (listIndex: number) => {
       </div>
     </div>
     <TheTodos
-        :list-index="listIndex" :todos-data="list?.todos" @delete-todo="deleteTodo($event)"
+        :list-index="listIndex" :todos-data="list?.todos"
+        @delete-todo="deleteTodo($event)"
         @create-todo="createTodo($event)"
         @is-editing-todo="isEditingTodo($event)"
         @update-todo="updateTodo($event)"
