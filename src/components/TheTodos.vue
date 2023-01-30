@@ -1,56 +1,18 @@
 <script lang="ts" setup>
-import {localizeDate} from "../mixins/utils";
-import {Todo} from "../mixins/types";
+import {findListIndexById, findTodoIndexById, localizeDate} from "../mixins/utils";
+import {List, Todo} from "../mixins/types";
 import {reactive, ref} from "vue";
 import {useVuelidate} from "@vuelidate/core";
 import {helpers, required} from "@vuelidate/validators";
 
 // Properties declaration
 const props = defineProps<{
-  listIndex: number,
+  listId: number,
+  listsData: List[],
   todosData: Todo[]
 }>();
 // Emits declaration
 const emit = defineEmits(["deleteTodo", "createTodo", "isEditingTodo", "updateTodo", "doneTodo"]);
-
-// Emits for todos
-const deleteTodo = (listIndex: number, todoIndex: number) => {
-  emit("deleteTodo", {listIndex: listIndex, todoIndex: todoIndex});
-};
-
-const createTodo = (listIndex: number) => {
-  emit("createTodo", listIndex);
-};
-
-const todoInputs = ref(props.todosData);
-
-const isEditingTodo = (listIndex: number, todoIndex: number) => {
-  if (props.todosData[todoIndex].is_adding_todo) {
-    deleteTodo(listIndex, todoIndex);
-  } else {
-    emit("isEditingTodo", {
-      listIndex: listIndex,
-      todoIndex: todoIndex,
-      is_editing_todo: !props.todosData[todoIndex].is_editing_todo
-    });
-  }
-};
-
-const updateTodo = (listIndex: number, todoIndex: number) => {
-  emit("updateTodo", {
-    listIndex: listIndex,
-    todoIndex: todoIndex,
-    newTodo: todoInputs.value[todoIndex]
-  });
-};
-
-const toggleDoneTodo = (listIndex: number, todoIndex: number) => {
-  emit("doneTodo", {
-    listIndex: listIndex,
-    todoIndex: todoIndex,
-    is_done_todo: !props.todosData[todoIndex].is_done_todo
-  });
-};
 
 // Validations
 const rules = {
@@ -69,14 +31,62 @@ const state = reactive({
   collection: props.todosData
 });
 const v$ = useVuelidate(rules, state);
-const handleSubmit = async (listIndex: number, todoIndex: number) => {
-  const isValid = await v$.value.$validate();
+const handleSubmit = async () => {
+  return await v$.value.$validate();
+};
 
-  if (!isValid) {
-    return;
+// Emits for todos
+const todoInputs = ref(props.todosData);
+
+const deleteTodo = (listId: number, todoId: number) => {
+  emit("deleteTodo", {listId: listId, todoId: todoId});
+};
+
+const createTodo = (listId: number) => {
+  emit("createTodo", listId);
+};
+
+const isEditingTodo = (listId: number, todoId: number) => {
+  const listIndex = findListIndexById(props.listsData, listId);
+  const todoIndex = findTodoIndexById(props.todosData, todoId);
+
+  if (props.todosData[todoIndex].is_adding_todo) {
+    deleteTodo(listId, todoId);
+  } else {
+    emit("isEditingTodo", {
+      listIndex: listIndex,
+      todoIndex: todoIndex,
+      is_editing_todo: !props.todosData[todoIndex].is_editing_todo
+    });
   }
+};
 
-  updateTodo(listIndex, todoIndex);
+const updateTodo = async (listId: number, todoId: number) => {
+  const listIndex = findListIndexById(props.listsData, listId);
+  const todoIndex = findTodoIndexById(props.todosData, todoId);
+
+  if (await handleSubmit()) {
+    emit("updateTodo", {
+      listIndex: listIndex,
+      listId: listId,
+      todoIndex: todoIndex,
+      todoId: todoId,
+      newTodo: todoInputs.value[todoIndex]
+    });
+  }
+};
+
+const toggleDoneTodo = (listId: number, todoId: number) => {
+  const listIndex = findListIndexById(props.listsData, listId);
+  const todoIndex = findTodoIndexById(props.todosData, todoId);
+
+  emit("doneTodo", {
+    listIndex: listIndex,
+    listId: listId,
+    todoIndex: todoIndex,
+    todoId: todoId,
+    is_done_todo: !props.todosData[todoIndex].is_done_todo
+  });
 };
 </script>
 
@@ -85,7 +95,7 @@ const handleSubmit = async (listIndex: number, todoIndex: number) => {
       v-for="(todo, todoIndex) in todosData" :key="todo"
       :class="{errorTitle: v$.collection.$each.$response.$errors[todoIndex].title.length,errorDeadline: v$.collection.$each.$response.$errors[todoIndex].deadline.length}"
       class="flex flex-column bg-white-alpha-30 border-round-xl m-3">
-    <div v-if="todosData[todoIndex].is_editing_todo" class="flex flex-column p-3">
+    <div v-if="todo?.is_editing_todo" class="flex flex-column p-3">
       <label
           :class="{'p-error':v$.collection.$each.$response.$errors[todoIndex].title.length}"
           for="title">Title*</label>
@@ -111,47 +121,54 @@ const handleSubmit = async (listIndex: number, todoIndex: number) => {
       <TheCalendar
           id="deadline"
           v-model="todoInputs[todoIndex].deadline"
-          :class="{'p-invalid':v$.collection.$each.$response.$errors[todoIndex].deadline.length}" date-format="dd.mm.yy"
+          :class="{'p-invalid':v$.collection.$each.$response.$errors[todoIndex].deadline.length}"
+          :model-value="localizeDate(todoInputs[todoIndex].deadline)" date-format="dd.mm.yy"
           placeholder="Add deadline for todo"/>
       <div v-for="error in v$.collection.$each.$response.$errors[todoIndex].deadline" :key="error" class="p-error">
         {{ error.$message.replace('Value', 'Deadline') }}
       </div>
     </div>
-    <div v-else class="flex flex-column p-3 cursor-pointer" @click="isEditingTodo(listIndex, todoIndex)">
-      <h3>{{ todo?.title }}</h3>
-      <p class="my-3">{{ todo?.content }}</p>
-      <p>{{ localizeDate(todo?.deadline) }}</p>
+    <div v-else class="flex flex-column p-3 cursor-pointer" @click="isEditingTodo(listId, todo?.id)">
+      <div class="flex flex-column">
+        <span class="text-primary">Title</span>
+        <h3>{{ todo?.title }}</h3>
+      </div>
+      <div class="flex flex-column my-3">
+        <span class="text-primary">Content</span>
+        <p>{{ todo?.content }}</p>
+      </div>
+      <div class="flex flex-column">
+        <span class="text-primary">Deadline</span>
+        <p>{{ localizeDate(todo?.deadline) }}</p>
+      </div>
     </div>
     <div class="flex justify-content-between align-items-center">
-      <div v-if="todosData[todoIndex].is_editing_todo" class="flex align-items-center p-3">
-        <i
-            class="pi pi-check cursor-pointer" style="color: darkgreen"
-            @click="handleSubmit(listIndex, todoIndex)"></i>
-        <i
-            class="pi pi-times cursor-pointer mx-3" style="color: darkred"
-            @click="isEditingTodo(listIndex, todoIndex)"></i>
+      <div v-if="todo?.is_editing_todo" class="flex align-items-center p-3">
+        <i class="pi pi-check cursor-pointer text-primary" @click="updateTodo(listId, todo?.id)"></i>
+        <i class="pi pi-times cursor-pointer mx-3" style="color: darkred" @click="isEditingTodo(listId, todo?.id)"></i>
       </div>
       <div v-else class="flex align-items-center p-3">
         <i
-            v-if="!todo?.is_done_todo" class="pi pi-check cursor-pointer" style="color: darkgreen"
-            @click="toggleDoneTodo(listIndex, todoIndex)"></i>
+            v-if="!todo?.is_done_todo" class="pi pi-check cursor-pointer text-primary"
+            @click="toggleDoneTodo(listId, todo?.id)"></i>
         <i
             v-else class="pi pi-times cursor-pointer" style="color: darkred"
-            @click="toggleDoneTodo(listIndex, todoIndex)"></i>
+            @click="toggleDoneTodo(listId, todo?.id)"></i>
         <i
             class="pi pi-pencil mx-3 cursor-pointer" style="color: darkblue"
-            @click="isEditingTodo(listIndex, todoIndex)"></i>
-        <i
-            class="pi pi-trash cursor-pointer" style="color: darkred"
-            @click="deleteTodo(listIndex, todoIndex)"></i>
+            @click="isEditingTodo(listId, todo?.id)"></i>
+        <i class="pi pi-trash cursor-pointer" style="color: darkred" @click="deleteTodo(listId, todo?.id)"></i>
       </div>
-      <div v-if="todosData[todoIndex].is_done_todo" class="p-3">
+      <div v-if="todo?.is_done_todo" class="p-3">
         <span class="border-2 border-round-xl p-2" style="border: seagreen; background: seagreen">Done</span>
+      </div>
+      <div v-else class="p-3">
+        <span class="border-2 border-round-xl p-2" style="border: darkorange; background: darkorange">In progress</span>
       </div>
     </div>
   </div>
   <div class="flex">
-    <TheButton class="m-3" label="+ Add new todo" @click="createTodo(listIndex)"/>
+    <TheButton class="m-3" label="+ Add new todo" @click="createTodo(listId)"/>
   </div>
 </template>
 

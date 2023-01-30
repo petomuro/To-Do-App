@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import TheTodos from "./TheTodos.vue";
+import {findListIndexById} from "../mixins/utils";
 import {List} from "../mixins/types";
 import {reactive, ref} from "vue";
 import {helpers, required} from "@vuelidate/validators";
@@ -31,17 +32,19 @@ const handleSubmit = async () => {
 };
 
 // Emits for lists
-const deleteList = (listIndex: number) => {
-  emit("deleteList", listIndex);
+const deleteList = (listId: number) => {
+  emit("deleteList", listId);
 };
 
 const createList = () => {
   emit("createList");
 };
 
-const isEditingList = (listIndex: number) => {
+const isEditingList = (listId: number) => {
+  const listIndex = findListIndexById(props.listsData, listId);
+
   if (props.listsData[listIndex].is_adding_list) {
-    deleteList(listIndex);
+    deleteList(listId);
   } else {
     emit("isEditingList", {
       listIndex: listIndex,
@@ -52,10 +55,13 @@ const isEditingList = (listIndex: number) => {
 
 const listInputs = ref(props.listsData);
 
-const updateList = async (listIndex: number) => {
+const updateList = async (listId: number) => {
+  const listIndex = findListIndexById(props.listsData, listId);
+
   if (await handleSubmit()) {
     emit("updateList", {
       listIndex: listIndex,
+      listId: listId,
       newList: listInputs.value[listIndex]
     });
   }
@@ -66,8 +72,8 @@ const deleteTodo = (e: any) => {
   emit("deleteTodo", e);
 };
 
-const createTodo = (listIndex: number) => {
-  emit("createTodo", listIndex);
+const createTodo = (listId: number) => {
+  emit("createTodo", listId);
 };
 
 const isEditingTodo = (e: any) => {
@@ -91,7 +97,7 @@ const toggleDoneTodo = (e: any) => {
       }"
       class="flex flex-column bg-white-alpha-20 border-round-xl m-3">
     <div class="flex justify-content-between">
-      <div v-if="listsData[listIndex].is_editing_list" class="flex flex-column p-3">
+      <div v-if="list?.is_editing_list" class="flex flex-column p-3">
         <label
             :class="{'p-error':v$.collection.$each.$response.$errors[listIndex].name.length}"
             for="name">Name*</label>
@@ -101,19 +107,20 @@ const toggleDoneTodo = (e: any) => {
         </div>
       </div>
       <div v-else class="p-3">
-        <h2 class="cursor-pointer" @click="isEditingList(listIndex)">{{ list?.name }}</h2>
+        <span class="text-primary">Name</span>
+        <h2 class="cursor-pointer" @click="isEditingList(list?.id)">{{ list?.name }}</h2>
       </div>
-      <div v-if="listsData[listIndex].is_editing_list" class="flex align-items-center p-3">
-        <i class="pi pi-check mx-3 cursor-pointer" style="color: darkgreen" @click="updateList(listIndex)"></i>
-        <i class="pi pi-times cursor-pointer" style="color: darkred" @click="isEditingList(listIndex)"></i>
+      <div v-if="list?.is_editing_list" class="flex align-items-center p-3">
+        <i class="pi pi-check mx-3 cursor-pointe text-primary" @click="updateList(list?.id)"></i>
+        <i class="pi pi-times cursor-pointer" style="color: darkred" @click="isEditingList(list?.id)"></i>
       </div>
       <div v-else class="flex align-items-center p-3">
-        <i class="pi pi-pencil mx-3 cursor-pointer" style="color: darkblue" @click="isEditingList(listIndex)"></i>
-        <i class="pi pi-trash cursor-pointer" style="color: darkred" @click="deleteList(listIndex)"></i>
+        <i class="pi pi-pencil mx-3 cursor-pointer" style="color: darkblue" @click="isEditingList(list?.id)"></i>
+        <i class="pi pi-trash cursor-pointer" style="color: darkred" @click="deleteList(list?.id)"></i>
       </div>
     </div>
     <TheTodos
-        :list-index="listIndex" :todos-data="list?.todos"
+        :list-id="parseInt(list?.id.toString())" :lists-data="listsData" :todos-data="list?.todos"
         @delete-todo="deleteTodo($event)"
         @create-todo="createTodo($event)"
         @is-editing-todo="isEditingTodo($event)"

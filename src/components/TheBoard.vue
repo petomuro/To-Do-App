@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import TheLists from "./TheLists.vue";
-import {Board, Data} from "../mixins/types";
-import useStore from "../store";
+import {findListIndexById, findTodoIndexById} from "../mixins/utils";
+import {Board, List} from "../mixins/types";
 import {Ref, ref} from "vue";
 import {useRoute} from "vue-router";
 
@@ -9,99 +9,107 @@ import {useRoute} from "vue-router";
 const route = useRoute();
 const id = parseInt(route.params.id as string);
 
-// Data and local storage
 const boardsData: Ref<Board> = ref({} as Board);
-const newBoardsData: Ref<Board> = ref({} as Board);
-const store = useStore();
-
-// Store data to localstorage function
-const storeData = (data: Data) => {
-  store.setBoards(data);
-};
+const listsData: Ref<List[]> = ref([] as List[]);
 
 // Sample data fetch function
-const fetchSampleData = () => {
-  (async () => {
-    try {
-      const sampleData = await fetch("/sample-data.json");
-      const data = await sampleData.json() as Data;
-      boardsData.value = data.boards[id];
-      storeData(data);
-    } catch (error) {
-      console.error(error);
-    }
-  })();
-};
-
-// Store data to localstorage function
-const storeBoardData = () => {
-  if (store.getBoards) {
-    const data = JSON.parse(store.getBoards) as Data;
-    data.boards[id] = boardsData.value;
-    storeData(data);
+const fetchMockApiData = async () => {
+  try {
+    const mockApiBoardsData = await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}`);
+    const mockApiListsData = await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists`);
+    const normalizedBoardsData = await mockApiBoardsData.json() as Board;
+    const normalizedListsData = await mockApiListsData.json() as List[];
+    boardsData.value = normalizedBoardsData;
+    listsData.value = normalizedListsData;
+    // const sampleData = await fetch("/sample-data.json");
+    // const normalizedSampleData = await sampleData.json() as Data;
+    // boardsData.value = normalizedSampleData.boards.find(board => board.id === id) as Board;
+    // listsData.value = normalizedSampleData.lists.filter(list => list.boardId === id);
+  } catch (error) {
+    console.error(error);
   }
 };
 
-// Load board data from external json or local storage function
-const loadBoardData = () => {
-  if (store.getBoards) {
-    const data = JSON.parse(store.getBoards) as Data;
-    boardsData.value = data.boards[id];
-  } else {
-    fetchSampleData();
-  }
-};
-
-// Load board data from local storage
-loadBoardData();
+// Load data from mockApi
+await fetchMockApiData();
 
 // Data filtering
-const listInputFilter = ref("");
+const inputFilter = ref("");
 
-const filterLists = () => {
-  if (listInputFilter.value === "") {
-    newBoardsData.value = {} as Board;
-  } else {
-    newBoardsData.value.lists = boardsData.value.lists.filter(list => list.name.includes(listInputFilter.value));
-  }
+const filter = async () => {
+  await fetchMockApiData();
+  listsData.value = listsData.value.filter(list => list.name.toLowerCase().includes(inputFilter.value.toLowerCase()));
+  // listsData.value = listsData.value.filter(({name}) => [name].some(val => val.toLowerCase().includes(inputFilter.value.toLowerCase())));
 };
 
 // CRUD for lists
-const deleteList = (listIndex: number) => {
-  boardsData.value.lists.splice(listIndex, 1);
-  storeBoardData();
+const deleteList = (listId: number) => {
+  const listIndex = findListIndexById(listsData.value, listId);
+  listsData.value.splice(listIndex, 1);
+
+  fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${listId}`, {
+    method: "DELETE"
+  });
 };
 
 const createList = () => {
-  boardsData.value.lists.push({
+  listsData.value.push({
+    id: listsData.value.length + 1,
+    boardId: id,
     name: "",
     is_adding_list: true,
     is_editing_list: false,
     todos: []
   });
-  const lastListIndex = boardsData.value.lists.length - 1;
+  const lastListIndex = listsData.value.length - 1;
   isEditingList({listIndex: lastListIndex, is_editing_list: true});
 };
 
 const isEditingList = (e: any) => {
-  boardsData.value.lists[e.listIndex].is_editing_list = e.is_editing_list;
+  listsData.value[e.listIndex].is_editing_list = e.is_editing_list;
 };
 
 const updateList = (e: any) => {
-  boardsData.value.lists[e.listIndex] = e.newList;
-  boardsData.value.lists[e.listIndex].is_adding_list = false;
-  boardsData.value.lists[e.listIndex].is_editing_list = false;
-  storeBoardData();
+  listsData.value[e.listIndex] = e.newList;
+  listsData.value[e.listIndex].is_editing_list = false;
+
+  if (listsData.value[e.listIndex].is_adding_list) {
+    listsData.value[e.listIndex].is_adding_list = false;
+
+    fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        name: listsData.value[e.listIndex].name
+      })
+    });
+  } else {
+    fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${e.listId}`, {
+      method: "PUT",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(listsData.value[e.listIndex])
+    });
+  }
 };
 
 // CRUD for todos
 const deleteTodo = (e: any) => {
-  boardsData.value.lists[e.listIndex].todos.splice(e.todoIndex, 1);
-  storeBoardData();
+  const listIndex = findListIndexById(listsData.value, e.listId);
+  const todoIndex = findTodoIndexById(listsData.value[listIndex].todos, e.todoId);
+  listsData.value[listIndex].todos.splice(todoIndex, 1);
+
+  fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${e.listId}`, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(listsData.value[listIndex])
+  });
 };
 
-const createTodo = (listIndex: number) => {
-  boardsData.value.lists[listIndex].todos.push({
+const createTodo = (listId: number) => {
+  const listIndex = findListIndexById(listsData.value, listId);
+
+  listsData.value[listIndex].todos.push({
+    id: listsData.value[listIndex].todos.length + 1,
     title: "",
     content: "",
     deadline: "",
@@ -109,40 +117,53 @@ const createTodo = (listIndex: number) => {
     is_editing_todo: false,
     is_done_todo: false,
   });
-  const lastTodoIndex = boardsData.value.lists[listIndex].todos.length - 1;
+  const lastTodoIndex = listsData.value[listIndex].todos.length - 1;
   isEditingTodo({listIndex: listIndex, todoIndex: lastTodoIndex, is_editing_todo: true});
 };
 
 const isEditingTodo = (e: any) => {
-  boardsData.value.lists[e.listIndex].todos[e.todoIndex].is_editing_todo = e.is_editing_todo;
+  listsData.value[e.listIndex].todos[e.todoIndex].is_editing_todo = e.is_editing_todo;
 };
 
 const updateTodo = (e: any) => {
-  boardsData.value.lists[e.listIndex].todos[e.todoIndex] = e.newTodo;
-  boardsData.value.lists[e.listIndex].todos[e.todoIndex].is_adding_todo = false;
-  boardsData.value.lists[e.listIndex].todos[e.todoIndex].is_editing_todo = false;
-  storeBoardData();
+  listsData.value[e.listIndex].todos[e.todoIndex] = e.newTodo;
+  listsData.value[e.listIndex].todos[e.todoIndex].is_adding_todo = false;
+  listsData.value[e.listIndex].todos[e.todoIndex].is_editing_todo = false;
+
+  fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${e.listId}`, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(listsData.value[e.listIndex])
+  });
 };
 
 const toggleDoneTodo = (e: any) => {
-  boardsData.value.lists[e.listIndex].todos[e.todoIndex].is_done_todo = e.is_done_todo;
-  storeBoardData();
+  listsData.value[e.listIndex].todos[e.todoIndex].is_done_todo = e.is_done_todo;
+
+  fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${e.listId}`, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(listsData.value[e.listIndex])
+  });
 };
 </script>
 
 <template>
-  <div v-if="boardsData?.lists !== undefined" class="flex flex-column">
+  <div class="flex flex-column">
     <div class="flex justify-content-between align-items-center">
       <div class="p-3">
         <h1>{{ boardsData?.title }}</h1>
       </div>
       <div class="p-3">
-        <InputText v-model="listInputFilter" placeholder="Search lists" type="text" @input="filterLists()"/>
+        <span class="p-input-icon-left">
+            <i class="pi pi-search z-1"/>
+            <InputText v-model="inputFilter" placeholder="Search" type="text" @input="filter()"/>
+        </span>
       </div>
     </div>
     <div class="flex">
       <TheLists
-          :lists-data="newBoardsData?.lists ? newBoardsData?.lists : boardsData?.lists"
+          :lists-data="listsData"
           @delete-list="deleteList($event)"
           @create-list="createList()" @is-editing-list="isEditingList($event)" @update-list="updateList($event)"
           @delete-todo="deleteTodo($event)" @create-todo="createTodo($event)" @is-editing-todo="isEditingTodo($event)"

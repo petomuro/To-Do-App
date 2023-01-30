@@ -1,76 +1,80 @@
 <script lang="ts" setup>
 import TheBoards from "../components/TheBoards.vue";
-import {Data} from "../mixins/types";
-import useStore from "../store";
+import {findBoardIndexById} from "../mixins/utils";
+import {Board} from "../mixins/types";
 import {ref, Ref} from "vue";
 
-// Sample data and local storage
-const data: Ref<Data> = ref({} as Data);
-const store = useStore();
+const data: Ref<Board[]> = ref([] as Board[]);
 
-// Store data to localstorage function
-const storeData = () => {
-  store.setBoards(data.value);
-};
-
-// Sample data fetch function
-const fetchSampleData = () => {
-  (async () => {
-    try {
-      const sampleData = await fetch("/sample-data.json");
-      data.value = await sampleData.json() as Data;
-      storeData();
-    } catch (error) {
-      console.error(error);
-    }
-  })();
-};
-
-// Load data from external json or local storage function
-const loadData = () => {
-  if (store.getBoards) {
-    data.value = JSON.parse(store.getBoards) as Data;
-  } else {
-    fetchSampleData();
+// MockApi data fetch function
+const fetchMockApiData = async () => {
+  try {
+    const mockApiData = await fetch("https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards");
+    data.value = await mockApiData.json() as Board[];
+    // const sampleData = await fetch("/sample-data.json");
+    // const normalizedSampleData = await sampleData.json() as Data;
+    // data.value = normalizedSampleData.boards;
+  } catch (error) {
+    console.error(error);
   }
 };
 
-// Load data from external json or local storage
-loadData();
+// Load data from mockApi
+await fetchMockApiData();
 
 // CRUD for boards
-const deleteBoard = (boardIndex: number) => {
-  data.value.boards.splice(boardIndex, 1);
-  storeData();
+const deleteBoard = (boardId: number) => {
+  const boardIndex = findBoardIndexById(data.value, boardId);
+  data.value.splice(boardIndex, 1);
+
+  fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${boardId}`, {
+    method: "DELETE"
+  });
 };
 
 const createBoard = () => {
-  data.value.boards.push({
+  data.value.push({
+    id: data.value.length + 1,
     title: "",
     is_adding_board: true,
     is_editing_board: false,
-    lists: []
   });
-  const lastBoardIndex = data.value.boards.length - 1;
+  const lastBoardIndex = data.value.length - 1;
   isEditingBoard({boardIndex: lastBoardIndex, is_editing_board: true});
 };
 
 const isEditingBoard = (e: any) => {
-  data.value.boards[e.boardIndex].is_editing_board = e.is_editing_board;
+  data.value[e.boardIndex].is_editing_board = e.is_editing_board;
 };
 
 const updateBoard = (e: any) => {
-  data.value.boards[e.boardIndex] = e.newBoard;
-  data.value.boards[e.boardIndex].is_adding_board = false;
-  data.value.boards[e.boardIndex].is_editing_board = false;
-  storeData();
+  data.value[e.boardIndex] = e.newBoard;
+  data.value[e.boardIndex].is_editing_board = false;
+
+  if (data.value[e.boardIndex].is_adding_board) {
+    data.value[e.boardIndex].is_adding_board = false;
+
+    fetch("https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        title: data.value[e.boardIndex].title
+      })
+    });
+  } else {
+    fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${e.boardId}`, {
+      method: "PUT",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(data.value[e.boardIndex])
+    });
+  }
 };
 </script>
 
 <template>
-  <div v-if="data?.boards !== undefined" class="flex">
+  <div class="flex">
     <TheBoards
-        :boards-data="data?.boards" @delete-board="deleteBoard($event)" @create-board="createBoard()"
+        :boards-data="data" @delete-board="deleteBoard($event)" @create-board="createBoard()"
         @is-editing-board="isEditingBoard($event)" @update-board="updateBoard($event)"/>
   </div>
 </template>

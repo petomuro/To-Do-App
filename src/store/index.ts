@@ -1,17 +1,21 @@
 import { defineStore } from "pinia";
-import { Data, State } from "../mixins/types";
+import { Board, Data, List } from "../mixins/types";
 
 export default defineStore("boards", {
-  state: (): State => {
+  state: (): Data => {
     return {
-      boards: "",
+      boards: [],
+      lists: [],
     };
   },
   getters: {
     getBoards: () => localStorage.getItem("boards"),
+    getLists: () => localStorage.getItem("lists"),
   },
   actions: {
-    setBoards: (data: Data) =>
-      localStorage.setItem("boards", JSON.stringify(data)),
+    setBoards: (boards: Board[]) =>
+      localStorage.setItem("boards", JSON.stringify(boards)),
+    setLists: (lists: List[]) =>
+      localStorage.setItem("boards", JSON.stringify(lists)),
   },
 });

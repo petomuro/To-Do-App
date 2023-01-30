@@ -1,8 +1,5 @@
-export interface State {
-  boards: string;
-}
-
 export interface Todo {
+  id: number;
   title: string;
   content: string;
   deadline: string;
@@ -12,6 +9,8 @@ export interface Todo {
 }
 
 export interface List {
+  id: number;
+  boardId: number;
   name: string;
   is_adding_list: boolean;
   is_editing_list: boolean;
@@ -19,12 +18,13 @@ export interface List {
 }
 
 export interface Board {
+  id: number;
   title: string;
   is_adding_board: boolean;
   is_editing_board: boolean;
-  lists: List[];
 }
 
 export interface Data {
   boards: Board[];
+  lists: List[];
 }
