@@ -19,7 +19,7 @@ const storeData = () => {
   store.setLists(id, listsData.value);
 };
 
-// Sample data fetch function
+// MockApi data fetch function
 const fetchMockApiData = async () => {
   try {
     const mockApiBoardsData = await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}`);
@@ -53,12 +53,50 @@ const fetchData = async () => {
 await fetchData();
 
 // Data filtering
-const inputFilter = ref("");
+const textInputFilter = ref("");
+const doneInputFilter = ref(false);
+const inProgressInputFilter = ref(false);
+
+const filterByText = () => {
+  listsData.value.forEach((list, index) => {
+    listsData.value[index].todos = list.todos.filter(({
+                                                        title,
+                                                        content,
+                                                        deadline
+                                                      }) => [title, content, new Date(deadline).toLocaleString("sk-SK")].some(val => val.toLowerCase().includes(textInputFilter.value.toLowerCase())));
+  });
+};
+
+const filterByDone = () => {
+  listsData.value.forEach((list, index) => {
+    listsData.value[index].todos = list.todos.filter(({is_done_todo}) => [is_done_todo].some(val => val === doneInputFilter.value));
+  });
+};
+
+const filterByInProgress = () => {
+  listsData.value.forEach((list, index) => {
+    listsData.value[index].todos = list.todos.filter(({is_done_todo}) => [is_done_todo].some(val => !val === inProgressInputFilter.value));
+  });
+};
 
 const filter = async () => {
   await fetchData();
-  listsData.value = listsData.value.filter(list => list.name.toLowerCase().includes(inputFilter.value.toLowerCase()));
-  // listsData.value = listsData.value.filter(({name}) => [name].some(val => val.toLowerCase().includes(inputFilter.value.toLowerCase())));
+
+  if (textInputFilter.value !== "" && !doneInputFilter.value && !inProgressInputFilter.value) {
+    filterByText();
+  } else if (textInputFilter.value === "" && doneInputFilter.value && !inProgressInputFilter.value) {
+    filterByDone();
+  } else if (textInputFilter.value === "" && !doneInputFilter.value && inProgressInputFilter.value) {
+    filterByInProgress();
+  } else if (textInputFilter.value !== "" && doneInputFilter.value && !inProgressInputFilter.value) {
+    filterByText();
+    filterByDone();
+  } else if (textInputFilter.value !== "" && !doneInputFilter.value && inProgressInputFilter.value) {
+    filterByText();
+    filterByInProgress();
+  } else if (textInputFilter.value !== "" && doneInputFilter.value && inProgressInputFilter.value) {
+    filterByText();
+  }
 };
 
 // CRUD for lists
@@ -187,17 +225,32 @@ const toggleDoneTodo = async (e: any) => {
 
 <template>
   <div class="flex flex-column">
-    <div class="flex justify-content-between align-items-center">
-      <div class="p-3">
-        <h1>{{ boardsData?.title }}</h1>
-      </div>
-      <div class="p-3">
-        <span class="p-input-icon-left">
-            <i class="pi pi-search z-1"/>
-            <InputText v-model="inputFilter" placeholder="Search" type="text" @input="filter()"/>
-        </span>
-      </div>
+    <div class="p-3">
+      <h1>{{ boardsData?.title }}</h1>
     </div>
+    <div class="p-3 absolute right-0 z-1">
+      <TheAccordion>
+        <AccordionTab header="Filter">
+          <div class="flex flex-column">
+            <span class="p-input-icon-left">
+              <i class="pi pi-search z-1"/>
+              <InputText v-model="textInputFilter" placeholder="Search" type="text" @input="filter()"/>
+            </span>
+            <div class="field-checkbox my-3">
+              <TheCheckbox v-model="doneInputFilter" :binary="true" input-id="done" @input="filter()"/>
+              <label for="done">Done</label>
+            </div>
+            <div class="field-checkbox">
+              <TheCheckbox
+                  v-model="inProgressInputFilter" :binary="true" input-id="inProgress"
+                  @input="filter()"/>
+              <label for="inProgress">In progress</label>
+            </div>
+          </div>
+        </AccordionTab>
+      </TheAccordion>
+    </div>
+    <hr>
     <div class="flex">
       <TheLists
           :lists-data="listsData"
