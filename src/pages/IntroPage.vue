@@ -18,9 +18,6 @@ const fetchMockApiData = async () => {
   try {
     const mockApiData = await fetch("https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards");
     data.value = await mockApiData.json() as Board[];
-    // const sampleData = await fetch("/sample-data.json");
-    // const normalizedSampleData = await sampleData.json() as Data;
-    // data.value = normalizedSampleData.boards;
     store.setBoards(data.value);
   } catch (error) {
     console.error(error);

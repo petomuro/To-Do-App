@@ -28,10 +28,6 @@ const fetchMockApiData = async () => {
     const normalizedListsData = await mockApiListsData.json() as List[];
     boardsData.value = normalizedBoardsData;
     listsData.value = normalizedListsData;
-    // const sampleData = await fetch("/sample-data.json");
-    // const normalizedSampleData = await sampleData.json() as Data;
-    // boardsData.value = normalizedSampleData.boards.find(board => board.id === id) as Board;
-    // listsData.value = normalizedSampleData.lists.filter(list => list.boardId === id);
     storeData();
   } catch (error) {
     console.error(error);
