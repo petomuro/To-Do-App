@@ -10,6 +10,7 @@ const props = defineProps<{
   listId: number,
   listsData: List[],
   todosData: Todo[]
+  filtering: boolean,
 }>();
 // Emits declaration
 const emit = defineEmits(["deleteTodo", "createTodo", "isEditingTodo", "updateTodo", "doneTodo"]);
@@ -94,11 +95,11 @@ const toggleDoneTodo = (listId: number, todoId: number) => {
   <div
       v-for="(todo, todoIndex) in todosData" :key="todoIndex"
       :class="{errorTitle: v$.collection.$each.$response.$errors[todoIndex].title.length,errorDeadline: v$.collection.$each.$response.$errors[todoIndex].deadline.length}"
-      class="flex flex-column justify-content-between flex-grow-1 bg-white-alpha-30 border-round-xl m-3">
+      class="flex flex-column justify-content-between bg-gray-300 border-round-xl m-3">
     <div v-if="todo?.is_editing_todo" class="flex flex-column p-3">
       <label
           :class="{'p-error':v$.collection.$each.$response.$errors[todoIndex].title.length}"
-          for="title">Title*</label>
+          class="text-primary" for="title">Title*</label>
       <InputText
           id="title"
           v-model="todoInputs[todoIndex].title"
@@ -109,7 +110,7 @@ const toggleDoneTodo = (listId: number, todoId: number) => {
         {{ error.$message.replace('Value', 'Title') }}
       </div>
       <div class="flex flex-column my-3">
-        <label for="content">Content</label>
+        <label class="text-primary" for="content">Content</label>
         <TheTextarea
             id="content"
             v-model="todoInputs[todoIndex].content" :auto-resize="true" cols="30"
@@ -117,7 +118,7 @@ const toggleDoneTodo = (listId: number, todoId: number) => {
       </div>
       <label
           :class="{'p-error':v$.collection.$each.$response.$errors[todoIndex].deadline.length}"
-          for="deadline">Deadline*</label>
+          class="text-primary" for="deadline">Deadline*</label>
       <TheCalendar
           id="deadline" v-model="todoInputs[todoIndex].deadline"
           :class="{'p-invalid':v$.collection.$each.$response.$errors[todoIndex].deadline.length}"
@@ -131,43 +132,44 @@ const toggleDoneTodo = (listId: number, todoId: number) => {
     <div v-else class="flex flex-column p-3 cursor-pointer" @click="isEditingTodo(listId, todo?.id)">
       <div class="flex flex-column">
         <span class="text-primary">Title</span>
-        <h3>{{ todo?.title }}</h3>
+        <h3 class="text-black-alpha-90">{{ todo?.title }}</h3>
       </div>
       <div class="flex flex-column my-3">
         <span class="text-primary">Content</span>
-        <p>{{ todo?.content }}</p>
+        <p class="text-black-alpha-90">{{ todo?.content }}</p>
       </div>
       <div class="flex flex-column">
         <span class="text-primary">Deadline</span>
-        <p>{{ localizeDate(todo?.deadline) }}</p>
+        <p class="text-black-alpha-90">{{ localizeDate(todo?.deadline) }}</p>
       </div>
     </div>
     <div class="flex justify-content-between align-items-center">
       <div v-if="todo?.is_editing_todo" class="flex align-items-center p-3">
         <i class="pi pi-check cursor-pointer text-primary" @click="updateTodo(listId, todo?.id)"></i>
-        <i class="pi pi-times cursor-pointer mx-3" style="color: darkred" @click="isEditingTodo(listId, todo?.id)"></i>
+        <i class="pi pi-times cursor-pointer mx-3 text-red-800" @click="isEditingTodo(listId, todo?.id)"></i>
       </div>
       <div v-else class="flex align-items-center p-3">
         <i
             v-if="!todo?.is_done_todo" class="pi pi-check cursor-pointer text-primary"
             @click="toggleDoneTodo(listId, todo?.id)"></i>
         <i
-            v-else class="pi pi-times cursor-pointer" style="color: darkred"
+            v-else class="pi pi-times cursor-pointer text-red-800"
             @click="toggleDoneTodo(listId, todo?.id)"></i>
         <i
-            class="pi pi-pencil mx-3 cursor-pointer" style="color: darkblue"
+            class="pi pi-pencil mx-3 cursor-pointer text-blue-800"
             @click="isEditingTodo(listId, todo?.id)"></i>
-        <i class="pi pi-trash cursor-pointer" style="color: darkred" @click="deleteTodo(listId, todo?.id)"></i>
+        <i class="pi pi-trash cursor-pointer text-red-800" @click="deleteTodo(listId, todo?.id)"></i>
       </div>
       <div v-if="todo?.is_done_todo" class="flex align-items-center p-3">
-        <span class="border-2 border-round-xl p-2" style="border: seagreen; background: seagreen">Done</span>
+        <span class="border-2 border-round-xl p-2 bg-green-800 border-green-800">Done</span>
       </div>
       <div v-if="!todo?.is_adding_todo && !todo?.is_done_todo" class="flex align-items-center p-3">
-        <span class="border-2 border-round-xl p-2" style="border: darkorange; background: darkorange">In progress</span>
+        <span
+            class="border-2 border-round-xl p-2 bg-orange-800 border-orange-800">In progress</span>
       </div>
     </div>
   </div>
-  <div class="flex">
+  <div v-if="!filtering" class="flex">
     <TheButton class="m-3" label="+ Add new todo" @click="createTodo(listId)"/>
   </div>
 </template>

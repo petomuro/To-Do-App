@@ -5,6 +5,8 @@ import {findListIndexById, findTodoIndexById} from "../mixins/utils";
 import {Board, List} from "../mixins/types";
 import {Ref, ref} from "vue";
 import {useRoute} from "vue-router";
+import {useConfirm} from "primevue/useconfirm";
+import {useToast} from "primevue/usetoast";
 
 // Router
 const route = useRoute();
@@ -19,6 +21,12 @@ const storeData = () => {
   store.setLists(id, listsData.value);
 };
 
+// Confirm
+const confirm = useConfirm();
+
+// Toast
+const toast = useToast();
+
 // MockApi data fetch function
 const fetchMockApiData = async () => {
   try {
@@ -29,8 +37,9 @@ const fetchMockApiData = async () => {
     boardsData.value = normalizedBoardsData;
     listsData.value = normalizedListsData;
     storeData();
+    toast.add({severity: "success", summary: "Success Message", detail: "Data fetched successfully", life: 3000});
   } catch (error) {
-    console.error(error);
+    toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
   }
 };
 
@@ -49,6 +58,7 @@ const fetchData = async () => {
 await fetchData();
 
 // Data filtering
+const filtering = ref(false);
 const textInputFilter = ref("");
 const doneInputFilter = ref(false);
 const inProgressInputFilter = ref(false);
@@ -75,38 +85,76 @@ const filterByInProgress = () => {
   });
 };
 
-const filter = async () => {
-  await fetchData();
-
+const isFiltering = () => {
   if (textInputFilter.value !== "" && !doneInputFilter.value && !inProgressInputFilter.value) {
     filterByText();
+
+    return true;
   } else if (textInputFilter.value === "" && doneInputFilter.value && !inProgressInputFilter.value) {
     filterByDone();
+
+    return true;
   } else if (textInputFilter.value === "" && !doneInputFilter.value && inProgressInputFilter.value) {
     filterByInProgress();
+
+    return true;
+  } else if (textInputFilter.value === "" && doneInputFilter.value && inProgressInputFilter.value) {
+    filterByDone();
+    filterByInProgress();
+
+    return true;
   } else if (textInputFilter.value !== "" && doneInputFilter.value && !inProgressInputFilter.value) {
     filterByText();
     filterByDone();
+
+    return true;
   } else if (textInputFilter.value !== "" && !doneInputFilter.value && inProgressInputFilter.value) {
     filterByText();
     filterByInProgress();
+
+    return true;
   } else if (textInputFilter.value !== "" && doneInputFilter.value && inProgressInputFilter.value) {
     filterByText();
+
+    return true;
   }
+
+  return false;
+};
+
+const filter = async () => {
+  await fetchData();
+
+  filtering.value = isFiltering();
 };
 
 // CRUD for lists
 const deleteListFromMockApi = async (listId: number) => {
-  await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${listId}`, {
-    method: "DELETE"
-  });
+  try {
+    await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${listId}`, {
+      method: "DELETE"
+    });
+    toast.add({severity: "success", summary: "Success Message", detail: "List deleted successfully", life: 3000});
+  } catch (error) {
+    toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
+  }
 };
 
 const deleteList = async (listId: number) => {
-  const listIndex = findListIndexById(listsData.value, listId);
-  listsData.value.splice(listIndex, 1);
-  await deleteListFromMockApi(listId);
-  storeData();
+  await confirm.require({
+    message: "Are you sure you want to proceed?",
+    header: "Confirmation",
+    icon: "pi pi-exclamation-triangle",
+    accept: async () => {
+      const listIndex = findListIndexById(listsData.value, listId);
+      listsData.value.splice(listIndex, 1);
+      await deleteListFromMockApi(listId);
+      storeData();
+    },
+    reject: () => {
+      toast.add({severity: "error", summary: "Rejected", detail: "You have rejected", life: 3000});
+    }
+  });
 };
 
 const createList = async () => {
@@ -131,21 +179,31 @@ const isEditingList = async (e: any) => {
 };
 
 const createListInMockApi = async (e: any) => {
-  await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists`, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      name: listsData.value[e.listIndex].name
-    })
-  });
+  try {
+    await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        name: listsData.value[e.listIndex].name
+      })
+    });
+    toast.add({severity: "success", summary: "Success Message", detail: "List created successfully", life: 3000});
+  } catch (error) {
+    toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
+  }
 };
 
 const updateListToMockApi = async (e: any) => {
-  await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${e.listId}`, {
-    method: "PUT",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(listsData.value[e.listIndex])
-  });
+  try {
+    await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${e.listId}`, {
+      method: "PUT",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(listsData.value[e.listIndex])
+    });
+    toast.add({severity: "success", summary: "Success Message", detail: "List updated successfully", life: 3000});
+  } catch (error) {
+    toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
+  }
 };
 
 const updateList = async (e: any) => {
@@ -165,19 +223,34 @@ const updateList = async (e: any) => {
 
 // CRUD for todos
 const updateTodoToMockApi = async (listId: number, listIndex: number) => {
-  await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${listId}`, {
-    method: "PUT",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(listsData.value[listIndex])
-  });
+  try {
+    await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${listId}`, {
+      method: "PUT",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(listsData.value[listIndex])
+    });
+    toast.add({severity: "success", summary: "Success Message", detail: "Toast updated successfully", life: 3000});
+  } catch (error) {
+    toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
+  }
 };
 
 const deleteTodo = async (e: any) => {
-  const listIndex = findListIndexById(listsData.value, e.listId);
-  const todoIndex = findTodoIndexById(listsData.value[listIndex].todos, e.todoId);
-  listsData.value[listIndex].todos.splice(todoIndex, 1);
-  await updateTodoToMockApi(e.listId, listIndex);
-  storeData();
+  await confirm.require({
+    message: "Are you sure you want to proceed?",
+    header: "Confirmation",
+    icon: "pi pi-exclamation-triangle",
+    accept: async () => {
+      const listIndex = findListIndexById(listsData.value, e.listId);
+      const todoIndex = findTodoIndexById(listsData.value[listIndex].todos, e.todoId);
+      listsData.value[listIndex].todos.splice(todoIndex, 1);
+      await updateTodoToMockApi(e.listId, listIndex);
+      storeData();
+    },
+    reject: () => {
+      toast.add({severity: "error", summary: "Rejected", detail: "You have rejected", life: 3000});
+    }
+  });
 };
 
 const createTodo = async (listId: number) => {
@@ -221,13 +294,14 @@ const toggleDoneTodo = async (e: any) => {
 
 <template>
   <div class="flex flex-column">
-    <div class="flex align-items-center p-3">
-      <RouterLink to="/">
-        <img alt="logo" src="../assets/vue.svg"/>
+    <div class="flex justify-content-between align-items-center py-3 px-5 bg-cadet-blue">
+      <RouterLink class="no-underline" to="/">
+        <h1 class="text-white-alpha-50">todo app</h1>
       </RouterLink>
       <h1 class="mx-3">{{ boardsData?.title }}</h1>
+      <div></div>
     </div>
-    <div class="p-3 absolute right-0 z-1">
+    <div class="py-3 px-5 absolute right-0 z-1">
       <TheAccordion>
         <AccordionTab header="Filter">
           <div class="flex flex-column">
@@ -249,12 +323,10 @@ const toggleDoneTodo = async (e: any) => {
         </AccordionTab>
       </TheAccordion>
     </div>
-    <hr>
-    <div class="flex flex-wrap">
+    <div class="flex flex-wrap p-3">
       <TheLists
-          :lists-data="listsData"
-          @delete-list="deleteList($event)"
-          @create-list="createList()" @is-editing-list="isEditingList($event)" @update-list="updateList($event)"
+          :filtering="filtering" :lists-data="listsData" @delete-list="deleteList($event)" @create-list="createList()"
+          @is-editing-list="isEditingList($event)" @update-list="updateList($event)"
           @delete-todo="deleteTodo($event)" @create-todo="createTodo($event)" @is-editing-todo="isEditingTodo($event)"
           @update-todo="updateTodo($event)" @done-todo="toggleDoneTodo($event)"/>
     </div>

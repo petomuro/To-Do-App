@@ -3,6 +3,8 @@ import TheBoards from "../components/TheBoards.vue";
 import useStore from "../store";
 import {findBoardIndexById} from "../mixins/utils";
 import {Board} from "../mixins/types";
+import {useConfirm} from "primevue/useconfirm";
+import {useToast} from "primevue/usetoast";
 import {ref, Ref} from "vue";
 
 const data: Ref<Board[]> = ref([] as Board[]);
@@ -13,14 +15,21 @@ const storeData = () => {
   store.setBoards(data.value);
 };
 
+// Confirm
+const confirm = useConfirm();
+
+// Toast
+const toast = useToast();
+
 // MockApi data fetch function
 const fetchMockApiData = async () => {
   try {
     const mockApiData = await fetch("https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards");
     data.value = await mockApiData.json() as Board[];
     store.setBoards(data.value);
+    toast.add({severity: "success", summary: "Success Message", detail: "Data fetched successfully", life: 3000});
   } catch (error) {
-    console.error(error);
+    toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
   }
 };
 
@@ -38,16 +47,31 @@ await fetchData();
 
 // CRUD for boards
 const deleteBoardFromMockApi = async (boardId: number) => {
-  await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${boardId}`, {
-    method: "DELETE"
-  });
+  try {
+    await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${boardId}`, {
+      method: "DELETE"
+    });
+    toast.add({severity: "success", summary: "Success Message", detail: "Board deleted successfully", life: 3000});
+  } catch (error) {
+    toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
+  }
 };
 
 const deleteBoard = async (boardId: number) => {
-  const boardIndex = findBoardIndexById(data.value, boardId);
-  data.value.splice(boardIndex, 1);
-  await deleteBoardFromMockApi(boardId);
-  storeData();
+  await confirm.require({
+    message: "Are you sure you want to proceed?",
+    header: "Confirmation",
+    icon: "pi pi-exclamation-triangle",
+    accept: async () => {
+      const boardIndex = findBoardIndexById(data.value, boardId);
+      data.value.splice(boardIndex, 1);
+      await deleteBoardFromMockApi(boardId);
+      storeData();
+    },
+    reject: () => {
+      toast.add({severity: "error", summary: "Rejected", detail: "You have rejected", life: 3000});
+    }
+  });
 };
 
 const createBoard = async () => {
@@ -70,21 +94,31 @@ const isEditingBoard = async (e: any) => {
 };
 
 const createBoardInMockApi = async (e: any) => {
-  await fetch("https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      title: data.value[e.boardIndex].title
-    })
-  });
+  try {
+    await fetch("https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        title: data.value[e.boardIndex].title
+      })
+    });
+    toast.add({severity: "success", summary: "Success Message", detail: "Board created successfully", life: 3000});
+  } catch (error) {
+    toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
+  }
 };
 
 const updateBoardToMockApi = async (e: any) => {
-  await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${e.boardId}`, {
-    method: "PUT",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(data.value[e.boardIndex])
-  });
+  try {
+    await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${e.boardId}`, {
+      method: "PUT",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(data.value[e.boardIndex])
+    });
+    toast.add({severity: "success", summary: "Success Message", detail: "Board updated successfully", life: 3000});
+  } catch (error) {
+    toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
+  }
 };
 
 const updateBoard = async (e: any) => {
@@ -103,10 +137,23 @@ const updateBoard = async (e: any) => {
 </script>
 
 <template>
-  <div class="flex flex-wrap">
+  <div class="flex flex-column align-items-center p-3 bg-cadet-blue">
+    <div class="flex flex-column align-items-end">
+      <h1 class="text-7xl">todo app</h1>
+      <p class="-mt-3">BY PETER MURIN</p>
+    </div>
+    <div class="flex flex-column">
+      <h2>Hey What's up! What do you want to do today?</h2>
+      <h2>Start adding items to your to-do list</h2>
+    </div>
+  </div>
+  <div class="flex flex-wrap justify-content-center p-3 bg-flora-white">
     <TheBoards
         :boards-data="data" @delete-board="deleteBoard($event)" @create-board="createBoard()"
         @is-editing-board="isEditingBoard($event)" @update-board="updateBoard($event)"/>
+  </div>
+  <div class="flex justify-content-center p-3">
+    <h1 class="text-black-alpha-90">KEEP YOUR DAYS ORGANISED WITH TO DO APP</h1>
   </div>
 </template>
 

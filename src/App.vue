@@ -2,6 +2,10 @@
 </script>
 
 <template>
+  <TheToast/>
+  
+  <ConfirmDialog/>
+
   <Suspense>
     <RouterView/>
   </Suspense>

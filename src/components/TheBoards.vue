@@ -73,30 +73,31 @@ const updateBoard = async (boardId: number) => {
       :class="{
         errorName: v$.collection.$each.$response.$errors[boardIndex].title.length,
       }"
-      class="flex flex-column flex-grow-1 justify-content-center bg-white-alpha-30 border-round-xl m-3">
+      class="flex flex-column justify-content-center bg-gray-200 border-round-xl m-3 w-20rem">
     <div v-if="board?.is_editing_board" class="flex flex-column p-3">
       <label
           :class="{'p-error':v$.collection.$each.$response.$errors[boardIndex].title.length}"
+          class="text-primary"
           for="name">Title*</label>
       <InputText v-model="boardInputs[boardIndex].title" placeholder="Add title for board" type="text"/>
       <div v-for="error in v$.collection.$each.$response.$errors[boardIndex].title" :key="error" class="p-error">
         {{ error.$message.replace('Value', 'Title') }}
       </div>
     </div>
-    <RouterLink v-else :to="`/${board?.id}`" class="no-underline text-color-secondary">
+    <RouterLink v-else :to="`/${board?.id}`" class="no-underline">
       <div class="flex flex-column justify-content-center p-3">
         <span class="text-primary">Title</span>
-        <h2>{{ board?.title }}</h2>
+        <h2 class="text-black-alpha-90">{{ board?.title }}</h2>
       </div>
     </RouterLink>
     <hr class="mx-1">
     <div v-if="board?.is_editing_board" class="flex align-items-center py-3">
       <i class="pi pi-check mx-3 cursor-pointer text-primary" @click="updateBoard(board?.id)"></i>
-      <i class="pi pi-times cursor-pointer" style="color: darkred" @click="isEditingBoard(board?.id)"></i>
+      <i class="pi pi-times cursor-pointer text-red-800" @click="isEditingBoard(board?.id)"></i>
     </div>
     <div v-else class="flex align-items-center py-3">
-      <i class="pi pi-pencil mx-3 cursor-pointer" style="color: darkblue" @click="isEditingBoard(board?.id)"></i>
-      <i class="pi pi-trash cursor-pointer" style="color: darkred" @click="deleteBoard(board?.id)"></i>
+      <i class="pi pi-pencil mx-3 cursor-pointer text-blue-800" @click="isEditingBoard(board?.id)"></i>
+      <i class="pi pi-trash cursor-pointer text-red-800" @click="deleteBoard(board?.id)"></i>
     </div>
   </div>
   <div class="flex flex-column">

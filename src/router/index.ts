@@ -13,5 +13,13 @@ export default createRouter({
       name: "Board",
       component: () => import("../pages/BoardPage.vue"),
     },
+    {
+      path: "/:catchAll(.*)*",
+      name: "NotFound",
+      // route level code-splitting
+      // this generates a separate chunk (NotFound.[hash].js) for this route
+      // which is lazy-loaded when the route is visited.
+      component: () => import("../pages/NotFoundPage.vue"),
+    },
   ],
 });
