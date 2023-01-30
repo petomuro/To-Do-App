@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import TheLists from "./TheLists.vue";
+import useStore from "../store";
 import {findListIndexById, findTodoIndexById} from "../mixins/utils";
 import {Board, List} from "../mixins/types";
 import {Ref, ref} from "vue";
@@ -11,6 +12,12 @@ const id = parseInt(route.params.id as string);
 
 const boardsData: Ref<Board> = ref({} as Board);
 const listsData: Ref<List[]> = ref([] as List[]);
+const store = useStore();
+
+// Local storage
+const storeData = () => {
+  store.setLists(id, listsData.value);
+};
 
 // Sample data fetch function
 const fetchMockApiData = async () => {
@@ -25,34 +32,50 @@ const fetchMockApiData = async () => {
     // const normalizedSampleData = await sampleData.json() as Data;
     // boardsData.value = normalizedSampleData.boards.find(board => board.id === id) as Board;
     // listsData.value = normalizedSampleData.lists.filter(list => list.boardId === id);
+    storeData();
   } catch (error) {
     console.error(error);
   }
 };
 
-// Load data from mockApi
-await fetchMockApiData();
+// Load data from mockApi or local storage function
+const fetchData = async () => {
+  store.$state.boardId = id;
+
+  if (store.getBoards && store.getLists) {
+    boardsData.value = (JSON.parse(store.getBoards) as Board[]).find(board => board.id == id) as Board;
+    listsData.value = (JSON.parse(store.getLists) as List[]);
+  } else {
+    await fetchMockApiData();
+  }
+};
+
+await fetchData();
 
 // Data filtering
 const inputFilter = ref("");
 
 const filter = async () => {
-  await fetchMockApiData();
+  await fetchData();
   listsData.value = listsData.value.filter(list => list.name.toLowerCase().includes(inputFilter.value.toLowerCase()));
   // listsData.value = listsData.value.filter(({name}) => [name].some(val => val.toLowerCase().includes(inputFilter.value.toLowerCase())));
 };
 
 // CRUD for lists
-const deleteList = (listId: number) => {
-  const listIndex = findListIndexById(listsData.value, listId);
-  listsData.value.splice(listIndex, 1);
-
-  fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${listId}`, {
+const deleteListFromMockApi = async (listId: number) => {
+  await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${listId}`, {
     method: "DELETE"
   });
 };
 
-const createList = () => {
+const deleteList = async (listId: number) => {
+  const listIndex = findListIndexById(listsData.value, listId);
+  listsData.value.splice(listIndex, 1);
+  await deleteListFromMockApi(listId);
+  storeData();
+};
+
+const createList = async () => {
   listsData.value.push({
     id: listsData.value.length + 1,
     boardId: id,
@@ -62,50 +85,68 @@ const createList = () => {
     todos: []
   });
   const lastListIndex = listsData.value.length - 1;
-  isEditingList({listIndex: lastListIndex, is_editing_list: true});
+  await isEditingList({listIndex: lastListIndex, is_editing_list: true});
 };
 
-const isEditingList = (e: any) => {
+const isEditingList = async (e: any) => {
   listsData.value[e.listIndex].is_editing_list = e.is_editing_list;
+
+  if (!e.is_editing_list) {
+    await fetchData();
+  }
 };
 
-const updateList = (e: any) => {
+const createListInMockApi = async (e: any) => {
+  await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      name: listsData.value[e.listIndex].name
+    })
+  });
+};
+
+const updateListToMockApi = async (e: any) => {
+  await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${e.listId}`, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(listsData.value[e.listIndex])
+  });
+};
+
+const updateList = async (e: any) => {
   listsData.value[e.listIndex] = e.newList;
   listsData.value[e.listIndex].is_editing_list = false;
 
   if (listsData.value[e.listIndex].is_adding_list) {
     listsData.value[e.listIndex].is_adding_list = false;
 
-    fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        name: listsData.value[e.listIndex].name
-      })
-    });
+    await createListInMockApi(e);
   } else {
-    fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${e.listId}`, {
-      method: "PUT",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(listsData.value[e.listIndex])
-    });
+    await updateListToMockApi(e);
   }
+
+  storeData();
 };
 
 // CRUD for todos
-const deleteTodo = (e: any) => {
-  const listIndex = findListIndexById(listsData.value, e.listId);
-  const todoIndex = findTodoIndexById(listsData.value[listIndex].todos, e.todoId);
-  listsData.value[listIndex].todos.splice(todoIndex, 1);
-
-  fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${e.listId}`, {
+const updateTodoToMockApi = async (listId: number, listIndex: number) => {
+  await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${listId}`, {
     method: "PUT",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify(listsData.value[listIndex])
   });
 };
 
-const createTodo = (listId: number) => {
+const deleteTodo = async (e: any) => {
+  const listIndex = findListIndexById(listsData.value, e.listId);
+  const todoIndex = findTodoIndexById(listsData.value[listIndex].todos, e.todoId);
+  listsData.value[listIndex].todos.splice(todoIndex, 1);
+  await updateTodoToMockApi(e.listId, listIndex);
+  storeData();
+};
+
+const createTodo = async (listId: number) => {
   const listIndex = findListIndexById(listsData.value, listId);
 
   listsData.value[listIndex].todos.push({
@@ -118,33 +159,29 @@ const createTodo = (listId: number) => {
     is_done_todo: false,
   });
   const lastTodoIndex = listsData.value[listIndex].todos.length - 1;
-  isEditingTodo({listIndex: listIndex, todoIndex: lastTodoIndex, is_editing_todo: true});
+  await isEditingTodo({listIndex: listIndex, todoIndex: lastTodoIndex, is_editing_todo: true});
 };
 
-const isEditingTodo = (e: any) => {
+const isEditingTodo = async (e: any) => {
   listsData.value[e.listIndex].todos[e.todoIndex].is_editing_todo = e.is_editing_todo;
+
+  if (!e.is_editing_todo) {
+    await fetchData();
+  }
 };
 
-const updateTodo = (e: any) => {
+const updateTodo = async (e: any) => {
   listsData.value[e.listIndex].todos[e.todoIndex] = e.newTodo;
   listsData.value[e.listIndex].todos[e.todoIndex].is_adding_todo = false;
   listsData.value[e.listIndex].todos[e.todoIndex].is_editing_todo = false;
-
-  fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${e.listId}`, {
-    method: "PUT",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(listsData.value[e.listIndex])
-  });
+  await updateTodoToMockApi(e.listId, e.listIndex);
+  storeData();
 };
 
-const toggleDoneTodo = (e: any) => {
+const toggleDoneTodo = async (e: any) => {
   listsData.value[e.listIndex].todos[e.todoIndex].is_done_todo = e.is_done_todo;
-
-  fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${e.listId}`, {
-    method: "PUT",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(listsData.value[e.listIndex])
-  });
+  await updateTodoToMockApi(e.listId, e.listIndex);
+  storeData();
 };
 </script>
 

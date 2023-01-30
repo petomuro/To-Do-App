@@ -119,11 +119,11 @@ const toggleDoneTodo = (listId: number, todoId: number) => {
           :class="{'p-error':v$.collection.$each.$response.$errors[todoIndex].deadline.length}"
           for="deadline">Deadline*</label>
       <TheCalendar
-          id="deadline"
-          v-model="todoInputs[todoIndex].deadline"
+          id="deadline" v-model="todoInputs[todoIndex].deadline"
           :class="{'p-invalid':v$.collection.$each.$response.$errors[todoIndex].deadline.length}"
-          :model-value="localizeDate(todoInputs[todoIndex].deadline)" date-format="dd.mm.yy"
-          placeholder="Add deadline for todo"/>
+          :model-value="localizeDate(todoInputs[todoIndex].deadline)"
+          date-format="dd.mm.yy" placeholder="Add deadline for todo"
+          show-time/>
       <div v-for="error in v$.collection.$each.$response.$errors[todoIndex].deadline" :key="error" class="p-error">
         {{ error.$message.replace('Value', 'Deadline') }}
       </div>
@@ -162,7 +162,7 @@ const toggleDoneTodo = (listId: number, todoId: number) => {
       <div v-if="todo?.is_done_todo" class="p-3">
         <span class="border-2 border-round-xl p-2" style="border: seagreen; background: seagreen">Done</span>
       </div>
-      <div v-else class="p-3">
+      <div v-if="!todo?.is_adding_todo && !todo?.is_done_todo" class="p-3">
         <span class="border-2 border-round-xl p-2" style="border: darkorange; background: darkorange">In progress</span>
       </div>
     </div>

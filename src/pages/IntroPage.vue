@@ -1,10 +1,17 @@
 <script lang="ts" setup>
 import TheBoards from "../components/TheBoards.vue";
+import useStore from "../store";
 import {findBoardIndexById} from "../mixins/utils";
 import {Board} from "../mixins/types";
 import {ref, Ref} from "vue";
 
 const data: Ref<Board[]> = ref([] as Board[]);
+const store = useStore();
+
+// Local storage
+const storeData = () => {
+  store.setBoards(data.value);
+};
 
 // MockApi data fetch function
 const fetchMockApiData = async () => {
@@ -14,25 +21,39 @@ const fetchMockApiData = async () => {
     // const sampleData = await fetch("/sample-data.json");
     // const normalizedSampleData = await sampleData.json() as Data;
     // data.value = normalizedSampleData.boards;
+    store.setBoards(data.value);
   } catch (error) {
     console.error(error);
   }
 };
 
-// Load data from mockApi
-await fetchMockApiData();
+// Load data from mockApi or local storage function
+const fetchData = async () => {
+  if (store.getBoards) {
+    data.value = JSON.parse(store.getBoards) as Board[];
+  } else {
+    await fetchMockApiData();
+  }
+};
+
+// Load data from mockApi or local storage
+await fetchData();
 
 // CRUD for boards
-const deleteBoard = (boardId: number) => {
-  const boardIndex = findBoardIndexById(data.value, boardId);
-  data.value.splice(boardIndex, 1);
-
-  fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${boardId}`, {
+const deleteBoardFromMockApi = async (boardId: number) => {
+  await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${boardId}`, {
     method: "DELETE"
   });
 };
 
-const createBoard = () => {
+const deleteBoard = async (boardId: number) => {
+  const boardIndex = findBoardIndexById(data.value, boardId);
+  data.value.splice(boardIndex, 1);
+  await deleteBoardFromMockApi(boardId);
+  storeData();
+};
+
+const createBoard = async () => {
   data.value.push({
     id: data.value.length + 1,
     title: "",
@@ -40,34 +61,47 @@ const createBoard = () => {
     is_editing_board: false,
   });
   const lastBoardIndex = data.value.length - 1;
-  isEditingBoard({boardIndex: lastBoardIndex, is_editing_board: true});
+  await isEditingBoard({boardIndex: lastBoardIndex, is_editing_board: true});
 };
 
-const isEditingBoard = (e: any) => {
+const isEditingBoard = async (e: any) => {
   data.value[e.boardIndex].is_editing_board = e.is_editing_board;
+
+  if (!e.is_editing_board) {
+    await fetchData();
+  }
 };
 
-const updateBoard = (e: any) => {
+const createBoardInMockApi = async (e: any) => {
+  await fetch("https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      title: data.value[e.boardIndex].title
+    })
+  });
+};
+
+const updateBoardToMockApi = async (e: any) => {
+  await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${e.boardId}`, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(data.value[e.boardIndex])
+  });
+};
+
+const updateBoard = async (e: any) => {
   data.value[e.boardIndex] = e.newBoard;
   data.value[e.boardIndex].is_editing_board = false;
 
   if (data.value[e.boardIndex].is_adding_board) {
     data.value[e.boardIndex].is_adding_board = false;
-
-    fetch("https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        title: data.value[e.boardIndex].title
-      })
-    });
+    await createBoardInMockApi(e);
   } else {
-    fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${e.boardId}`, {
-      method: "PUT",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(data.value[e.boardIndex])
-    });
+    await updateBoardToMockApi(e);
   }
+
+  storeData();
 };
 </script>
 

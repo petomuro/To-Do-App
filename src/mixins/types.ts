@@ -23,8 +23,3 @@ export interface Board {
   is_adding_board: boolean;
   is_editing_board: boolean;
 }
-
-export interface Data {
-  boards: Board[];
-  lists: List[];
-}
