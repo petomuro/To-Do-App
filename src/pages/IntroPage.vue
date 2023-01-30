@@ -153,7 +153,7 @@ const updateBoard = async (e: any) => {
         @is-editing-board="isEditingBoard($event)" @update-board="updateBoard($event)"/>
   </div>
   <div class="flex justify-content-center p-3">
-    <h1 class="text-black-alpha-90">KEEP YOUR DAYS ORGANISED WITH TO DO APP</h1>
+    <h1 class="text-black-alpha-90">KEEP YOUR DAYS ORGANISED WITH TODO APP</h1>
   </div>
 </template>
 
