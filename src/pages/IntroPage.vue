@@ -103,7 +103,7 @@ const updateBoard = async (e: any) => {
 </script>
 
 <template>
-  <div class="flex">
+  <div class="flex flex-wrap">
     <TheBoards
         :boards-data="data" @delete-board="deleteBoard($event)" @create-board="createBoard()"
         @is-editing-board="isEditingBoard($event)" @update-board="updateBoard($event)"/>

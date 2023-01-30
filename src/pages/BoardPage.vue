@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import TheLists from "./TheLists.vue";
+import TheLists from "../components/TheLists.vue";
 import useStore from "../store";
 import {findListIndexById, findTodoIndexById} from "../mixins/utils";
 import {Board, List} from "../mixins/types";
@@ -221,8 +221,11 @@ const toggleDoneTodo = async (e: any) => {
 
 <template>
   <div class="flex flex-column">
-    <div class="p-3">
-      <h1>{{ boardsData?.title }}</h1>
+    <div class="flex align-items-center p-3">
+      <RouterLink to="/">
+        <img alt="logo" src="../assets/vue.svg"/>
+      </RouterLink>
+      <h1 class="mx-3">{{ boardsData?.title }}</h1>
     </div>
     <div class="p-3 absolute right-0 z-1">
       <TheAccordion>
@@ -247,7 +250,7 @@ const toggleDoneTodo = async (e: any) => {
       </TheAccordion>
     </div>
     <hr>
-    <div class="flex">
+    <div class="flex flex-wrap">
       <TheLists
           :lists-data="listsData"
           @delete-list="deleteList($event)"

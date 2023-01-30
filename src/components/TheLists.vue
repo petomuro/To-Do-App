@@ -91,11 +91,11 @@ const toggleDoneTodo = (e: any) => {
 
 <template>
   <div
-      v-for="(list, listIndex) in listsData" :key="list"
+      v-for="(list, listIndex) in listsData" :key="listIndex"
       :class="{
         errorName: v$.collection.$each.$response.$errors[listIndex].name.length,
       }"
-      class="flex flex-column bg-white-alpha-20 border-round-xl m-3">
+      class="flex flex-column flex-grow-1 bg-white-alpha-20 border-round-xl m-3">
     <div class="flex justify-content-between">
       <div v-if="list?.is_editing_list" class="flex flex-column p-3">
         <label
@@ -106,15 +106,15 @@ const toggleDoneTodo = (e: any) => {
           {{ error.$message.replace('Value', 'Title') }}
         </div>
       </div>
-      <div v-else class="p-3">
+      <div v-else class="flex flex-column p-3">
         <span class="text-primary">Name</span>
         <h2 class="cursor-pointer" @click="isEditingList(list?.id)">{{ list?.name }}</h2>
       </div>
-      <div v-if="list?.is_editing_list" class="flex align-items-center p-3">
+      <div v-if="list?.is_editing_list" class="flex align-items-center px-3">
         <i class="pi pi-check mx-3 cursor-pointe text-primary" @click="updateList(list?.id)"></i>
         <i class="pi pi-times cursor-pointer" style="color: darkred" @click="isEditingList(list?.id)"></i>
       </div>
-      <div v-else class="flex align-items-center p-3">
+      <div v-else class="flex align-items-center px-3">
         <i class="pi pi-pencil mx-3 cursor-pointer" style="color: darkblue" @click="isEditingList(list?.id)"></i>
         <i class="pi pi-trash cursor-pointer" style="color: darkred" @click="deleteList(list?.id)"></i>
       </div>

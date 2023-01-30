@@ -92,9 +92,9 @@ const toggleDoneTodo = (listId: number, todoId: number) => {
 
 <template>
   <div
-      v-for="(todo, todoIndex) in todosData" :key="todo"
+      v-for="(todo, todoIndex) in todosData" :key="todoIndex"
       :class="{errorTitle: v$.collection.$each.$response.$errors[todoIndex].title.length,errorDeadline: v$.collection.$each.$response.$errors[todoIndex].deadline.length}"
-      class="flex flex-column bg-white-alpha-30 border-round-xl m-3">
+      class="flex flex-column justify-content-between flex-grow-1 bg-white-alpha-30 border-round-xl m-3">
     <div v-if="todo?.is_editing_todo" class="flex flex-column p-3">
       <label
           :class="{'p-error':v$.collection.$each.$response.$errors[todoIndex].title.length}"
@@ -121,9 +121,9 @@ const toggleDoneTodo = (listId: number, todoId: number) => {
       <TheCalendar
           id="deadline" v-model="todoInputs[todoIndex].deadline"
           :class="{'p-invalid':v$.collection.$each.$response.$errors[todoIndex].deadline.length}"
-          :model-value="localizeDate(todoInputs[todoIndex].deadline)"
-          date-format="dd.mm.yy" placeholder="Add deadline for todo"
-          show-time/>
+          date-format="dd.mm.yy"
+          placeholder="Add deadline for todo" show-time
+          @update:model-value="localizeDate(todoInputs[todoIndex].deadline)"/>
       <div v-for="error in v$.collection.$each.$response.$errors[todoIndex].deadline" :key="error" class="p-error">
         {{ error.$message.replace('Value', 'Deadline') }}
       </div>
@@ -159,10 +159,10 @@ const toggleDoneTodo = (listId: number, todoId: number) => {
             @click="isEditingTodo(listId, todo?.id)"></i>
         <i class="pi pi-trash cursor-pointer" style="color: darkred" @click="deleteTodo(listId, todo?.id)"></i>
       </div>
-      <div v-if="todo?.is_done_todo" class="p-3">
+      <div v-if="todo?.is_done_todo" class="flex align-items-center p-3">
         <span class="border-2 border-round-xl p-2" style="border: seagreen; background: seagreen">Done</span>
       </div>
-      <div v-if="!todo?.is_adding_todo && !todo?.is_done_todo" class="p-3">
+      <div v-if="!todo?.is_adding_todo && !todo?.is_done_todo" class="flex align-items-center p-3">
         <span class="border-2 border-round-xl p-2" style="border: darkorange; background: darkorange">In progress</span>
       </div>
     </div>

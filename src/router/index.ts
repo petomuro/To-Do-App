@@ -11,7 +11,7 @@ export default createRouter({
     {
       path: "/:id",
       name: "Board",
-      component: () => import("../components/TheBoard.vue"),
+      component: () => import("../pages/BoardPage.vue"),
     },
   ],
 });
