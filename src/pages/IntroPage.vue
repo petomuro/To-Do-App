@@ -24,11 +24,16 @@ const storeData = () => {
   store.setBoards(data.value);
 };
 
-// MockApi data fetch function
+// MockApi data fetch functions
 const fetchMockApiData = async () => {
+  const mockApiData = await fetch("https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards");
+
+  return await mockApiData.json() as Board[];
+};
+
+const fetchFromMockApi = async () => {
   try {
-    const mockApiData = await fetch("https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards");
-    data.value = await mockApiData.json() as Board[];
+    data.value = await fetchMockApiData();
     storeData();
     // toast.add({severity: "success", summary: "Success Message", detail: "Data fetched successfully", life: 3000});
   } catch (error) {
@@ -38,10 +43,10 @@ const fetchMockApiData = async () => {
 
 // Load data from mockApi or local storage function
 const fetchData = async () => {
-  if (boardsLocalStorage().value.length > 0) {
-    data.value = boardsLocalStorage().value;
+  if ((await fetchMockApiData()).length > boardsLocalStorage().value.length) {
+    await fetchFromMockApi();
   } else {
-    await fetchMockApiData();
+    data.value = boardsLocalStorage().value;
   }
 };
 

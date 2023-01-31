@@ -36,15 +36,18 @@ const storeData = () => {
   store.setLists(id, listsData.value);
 };
 
-// MockApi data fetch function
+// MockApi data fetch functions
 const fetchMockApiData = async () => {
+  const mockApiListsData = await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists`);
+
+  return await mockApiListsData.json() as List[];
+};
+
+const fetchFromMockApi = async () => {
   try {
     const mockApiBoardsData = await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}`);
-    const mockApiListsData = await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists`);
-    const normalizedBoardsData = await mockApiBoardsData.json() as Board;
-    const normalizedListsData = await mockApiListsData.json() as List[];
-    boardsData.value = normalizedBoardsData;
-    listsData.value = normalizedListsData;
+    boardsData.value = await mockApiBoardsData.json() as Board;
+    listsData.value = await fetchMockApiData();
     storeData();
 
     // if (!filtering.value) {
@@ -59,11 +62,11 @@ const fetchMockApiData = async () => {
 
 // Load data from mockApi or local storage function
 const fetchData = async () => {
-  if (boardsLocalStorage().value.length > 0 && listsLocalStorage(id).value.length > 0) {
+  if ((await fetchMockApiData()).length > listsLocalStorage(id).value.length) {
+    await fetchFromMockApi();
+  } else {
     boardsData.value = boardsLocalStorage().value.find(board => board.id == id) as Board;
     listsData.value = listsLocalStorage(id).value;
-  } else {
-    await fetchMockApiData();
   }
 };
 
@@ -137,6 +140,7 @@ const deleteList = async (listId: number) => {
       listsData.value.splice(listIndex, 1);
       await deleteListFromMockApi(listId);
       storeData();
+      await filter();
     },
     reject: () => {
       // toast.add({severity: "error", summary: "Rejected", detail: "You have rejected", life: 3000});
@@ -206,6 +210,7 @@ const updateList = async (e: any) => {
   }
 
   storeData();
+  await filter();
 };
 
 // CRUD for todos functions
@@ -233,6 +238,7 @@ const deleteTodo = async (e: any) => {
       listsData.value[listIndex].todos.splice(todoIndex, 1);
       await updateTodoToMockApi(e.listId, listIndex);
       storeData();
+      await filter();
     },
     reject: () => {
       // toast.add({severity: "error", summary: "Rejected", detail: "You have rejected", life: 3000});
@@ -270,12 +276,14 @@ const updateTodo = async (e: any) => {
   listsData.value[e.listIndex].todos[e.todoIndex].is_editing_todo = false;
   await updateTodoToMockApi(e.listId, e.listIndex);
   storeData();
+  await filter();
 };
 
 const toggleDoneTodo = async (e: any) => {
   listsData.value[e.listIndex].todos[e.todoIndex].is_done_todo = e.is_done_todo;
   await updateTodoToMockApi(e.listId, e.listIndex);
   storeData();
+  await filter();
 };
 
 // Load data from mockApi or local storage
