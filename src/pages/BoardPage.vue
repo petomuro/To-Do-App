@@ -1,6 +1,12 @@
 <script lang="ts" setup>
 import TheLists from "../components/TheLists.vue";
-import {boardsLocalStorage, findListIndexById, findTodoIndexById, listsLocalStorage} from "../mixins/utils";
+import {
+  boardsLocalStorage,
+  convert2DTo1D,
+  findListIndexById,
+  findTodoIndexById,
+  listsLocalStorage
+} from "../mixins/utils";
 import {Board, List} from "../mixins/types";
 import useStore from "../store";
 import {Ref, ref} from "vue";
@@ -60,9 +66,19 @@ const fetchFromMockApi = async () => {
   }
 };
 
+// Check is mockApi has som new data
+const hasNewData = async () => {
+  const mockApiLists = (await fetchMockApiData());
+  const localStorage = listsLocalStorage(id).value;
+  const mockApiTodos = convert2DTo1D(mockApiLists.map(list => list.todos));
+  const localStorageTodos = convert2DTo1D(localStorage.map(list => list.todos));
+
+  return (mockApiLists.length !== localStorage.length) || (mockApiTodos.length !== localStorageTodos.length);
+};
+
 // Load data from mockApi or local storage function
 const fetchData = async () => {
-  if ((await fetchMockApiData()).length !== listsLocalStorage(id).value.length) {
+  if (await hasNewData()) {
     await fetchFromMockApi();
   } else {
     boardsData.value = boardsLocalStorage().value.find(board => board.id == id) as Board;

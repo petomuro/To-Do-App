@@ -61,3 +61,12 @@ export function listsLocalStorage(boardId: number) {
     },
   }));
 }
+
+export function convert2DTo1D(data: any[][]) {
+  let newData: Todo[] = [];
+  for (let i = 0; i < data.length; i++) {
+    newData = newData.concat(data[i]);
+  }
+
+  return newData;
+}
