@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {findBoardIndexById} from "../mixins/utils";
 import {Board} from "../mixins/types";
-import {reactive, ref} from "vue";
+import {reactive, ref, watch} from "vue";
 import {helpers, required} from "@vuelidate/validators";
 import {useVuelidate} from "@vuelidate/core";
 
@@ -11,7 +11,7 @@ const props = defineProps<{
 }>();
 
 // Emits declaration
-const emit = defineEmits(["deleteBoard", "createBoard", "isEditingBoard", "updateBoard"]);
+const emit = defineEmits(["deleteBoard", "createBoard", "closeEditingNewBoard", "isEditingBoard", "updateBoard"]);
 
 // Validations
 const rules = {
@@ -26,7 +26,7 @@ const rules = {
 const state = reactive({
   collection: props.boardsData
 });
-const v$ = useVuelidate(rules, state);
+let v$ = useVuelidate(rules, state);
 const handleSubmit = async () => {
   return await v$.value.$validate();
 };
@@ -42,11 +42,15 @@ const createBoard = () => {
   emit("createBoard");
 };
 
+const closeEditingNewBoard = () => {
+  emit("closeEditingNewBoard");
+};
+
 const isEditingBoard = (boardId: number) => {
   const boardIndex = findBoardIndexById(props.boardsData, boardId);
 
-  if (props.boardsData[boardIndex].is_adding_board) {
-    deleteBoard(boardId);
+  if (props.boardsData[props.boardsData.length - 1].is_adding_board) {
+    closeEditingNewBoard();
   } else {
     emit("isEditingBoard", {
       boardIndex: boardIndex,
@@ -56,7 +60,11 @@ const isEditingBoard = (boardId: number) => {
 };
 
 const updateBoard = async (boardId: number) => {
-  const boardIndex = findBoardIndexById(props.boardsData, boardId);
+  let boardIndex = findBoardIndexById(props.boardsData, boardId);
+
+  if (!props.boardsData[boardIndex].is_editing_board) {
+    boardIndex = boardId - 1;
+  }
 
   if (await handleSubmit()) {
     emit("updateBoard", {
@@ -66,6 +74,12 @@ const updateBoard = async (boardId: number) => {
     });
   }
 };
+
+watch(() => props.boardsData, () => {
+  boardInputs.value = props.boardsData;
+  state.collection = props.boardsData;
+  v$ = useVuelidate(rules, state);
+});
 </script>
 
 <template>

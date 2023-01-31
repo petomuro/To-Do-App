@@ -13,7 +13,7 @@ const props = defineProps<{
 }>();
 
 // Emits declaration
-const emit = defineEmits(["deleteList", "createList", "isEditingList", "updateList", "deleteTodo", "createTodo", "isEditingTodo", "updateTodo", "doneTodo"]);
+const emit = defineEmits(["deleteList", "createList", "closeEditingNewList", "isEditingList", "updateList", "deleteTodo", "createTodo", "closeEditingNewTodo", "isEditingTodo", "updateTodo", "doneTodo"]);
 
 // Validations
 const rules = {
@@ -44,11 +44,15 @@ const createList = () => {
   emit("createList");
 };
 
+const closeEditingNewList = () => {
+  emit("closeEditingNewList");
+};
+
 const isEditingList = (listId: number) => {
   const listIndex = findListIndexById(props.listsData, listId);
 
-  if (props.listsData[listIndex].is_adding_list) {
-    deleteList(listId);
+  if (props.listsData[props.listsData.length - 1].is_adding_list) {
+    closeEditingNewList();
   } else {
     emit("isEditingList", {
       listIndex: listIndex,
@@ -58,7 +62,11 @@ const isEditingList = (listId: number) => {
 };
 
 const updateList = async (listId: number) => {
-  const listIndex = findListIndexById(props.listsData, listId);
+  let listIndex = findListIndexById(props.listsData, listId);
+
+  if (!props.listsData[listIndex].is_editing_list) {
+    listIndex = listId - 1;
+  }
 
   if (await handleSubmit()) {
     emit("updateList", {
@@ -76,6 +84,10 @@ const deleteTodo = (e: any) => {
 
 const createTodo = (listId: number) => {
   emit("createTodo", listId);
+};
+
+const closeEditingNewTodo = (listIndex: number) => {
+  emit("closeEditingNewTodo", listIndex);
 };
 
 const isEditingTodo = (e: any) => {
@@ -130,8 +142,8 @@ watch(() => props.listsData, () => {
     <TheTodos
         :filtering="filtering" :list-id="parseInt(list?.id.toString())" :lists-data="listsData"
         :todos-data="list?.todos" @delete-todo="deleteTodo($event)" @create-todo="createTodo($event)"
-        @is-editing-todo="isEditingTodo($event)" @update-todo="updateTodo($event)"
-        @done-todo="toggleDoneTodo($event)"/>
+        @close-editing-new-todo="closeEditingNewTodo($event)" @is-editing-todo="isEditingTodo($event)"
+        @update-todo="updateTodo($event)" @done-todo="toggleDoneTodo($event)"/>
   </div>
   <div v-if="!filtering" class="flex flex-column">
     <TheButton class="m-3" label="+ Add new list" @click="createList()"/>

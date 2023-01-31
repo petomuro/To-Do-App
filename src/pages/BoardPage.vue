@@ -182,6 +182,10 @@ const createList = async () => {
   await isEditingList({listIndex: lastListIndex, is_editing_list: true});
 };
 
+const closeEditingNewList = () => {
+  listsData.value.pop();
+};
+
 const isEditingList = async (e: any) => {
   listsData.value[e.listIndex].is_editing_list = e.is_editing_list;
 
@@ -289,6 +293,10 @@ const createTodo = async (listId: number) => {
   await isEditingTodo({listIndex: listIndex, todoIndex: lastTodoIndex, is_editing_todo: true});
 };
 
+const closeEditingNewTodo = (listIndex: number) => {
+  listsData.value[listIndex].todos.pop();
+};
+
 const isEditingTodo = async (e: any) => {
   listsData.value[e.listIndex].todos[e.todoIndex].is_editing_todo = e.is_editing_todo;
 
@@ -356,9 +364,11 @@ await fetchData();
     </div>
     <div class="flex flex-wrap p-3">
       <TheLists
-          :filtering="filtering" :lists-data="listsData" @delete-list="deleteList($event)" @create-list="createList()"
+          :filtering="filtering" :lists-data="listsData" @delete-list="deleteList($event)"
+          @create-list="createList()" @close-editing-new-list="closeEditingNewList()"
           @is-editing-list="isEditingList($event)" @update-list="updateList($event)"
-          @delete-todo="deleteTodo($event)" @create-todo="createTodo($event)" @is-editing-todo="isEditingTodo($event)"
+          @delete-todo="deleteTodo($event)" @create-todo="createTodo($event)"
+          @close-editing-new-todo="closeEditingNewTodo($event)" @is-editing-todo="isEditingTodo($event)"
           @update-todo="updateTodo($event)" @done-todo="toggleDoneTodo($event)"/>
     </div>
   </div>

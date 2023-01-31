@@ -90,6 +90,10 @@ const createBoard = async () => {
   await isEditingBoard({boardIndex: lastBoardIndex, is_editing_board: true});
 };
 
+const closeEditingNewBoard = () => {
+  data.value.pop();
+};
+
 const isEditingBoard = async (e: any) => {
   data.value[e.boardIndex].is_editing_board = e.is_editing_board;
 
@@ -158,7 +162,8 @@ await fetchData();
   <div class="flex flex-wrap justify-content-center p-3 bg-flora-white">
     <TheBoards
         :boards-data="data" @delete-board="deleteBoard($event)" @create-board="createBoard()"
-        @is-editing-board="isEditingBoard($event)" @update-board="updateBoard($event)"/>
+        @close-editing-new-board="closeEditingNewBoard()" @is-editing-board="isEditingBoard($event)"
+        @update-board="updateBoard($event)"/>
   </div>
   <div class="flex justify-content-center p-3">
     <h1 class="text-black-alpha-90">KEEP YOUR DAYS ORGANISED WITH TODO APP</h1>

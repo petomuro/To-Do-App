@@ -14,7 +14,7 @@ const props = defineProps<{
 }>();
 
 // Emits declaration
-const emit = defineEmits(["deleteTodo", "createTodo", "isEditingTodo", "updateTodo", "doneTodo"]);
+const emit = defineEmits(["deleteTodo", "createTodo", "closeEditingNewTodo", "isEditingTodo", "updateTodo", "doneTodo"]);
 
 // Validations
 const rules = {
@@ -48,12 +48,16 @@ const createTodo = (listId: number) => {
   emit("createTodo", listId);
 };
 
+const closeEditingNewTodo = (listIndex: number) => {
+  emit("closeEditingNewTodo", listIndex);
+};
+
 const isEditingTodo = (listId: number, todoId: number) => {
   const listIndex = findListIndexById(props.listsData, listId);
   const todoIndex = findTodoIndexById(props.todosData, todoId);
 
-  if (props.todosData[todoIndex].is_adding_todo) {
-    deleteTodo(listId, todoId);
+  if (props.todosData[props.todosData.length - 1].is_adding_todo) {
+    closeEditingNewTodo(listIndex);
   } else {
     emit("isEditingTodo", {
       listIndex: listIndex,
@@ -65,7 +69,11 @@ const isEditingTodo = (listId: number, todoId: number) => {
 
 const updateTodo = async (listId: number, todoId: number) => {
   const listIndex = findListIndexById(props.listsData, listId);
-  const todoIndex = findTodoIndexById(props.todosData, todoId);
+  let todoIndex = findTodoIndexById(props.todosData, todoId);
+
+  if (!props.todosData[todoIndex].is_editing_todo) {
+    todoIndex = todoId - 1;
+  }
 
   if (await handleSubmit()) {
     emit("updateTodo", {
