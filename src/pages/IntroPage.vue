@@ -43,7 +43,7 @@ const fetchFromMockApi = async () => {
 
 // Load data from mockApi or local storage function
 const fetchData = async () => {
-  if ((await fetchMockApiData()).length > boardsLocalStorage().value.length) {
+  if ((await fetchMockApiData()).length !== boardsLocalStorage().value.length) {
     await fetchFromMockApi();
   } else {
     data.value = boardsLocalStorage().value;
