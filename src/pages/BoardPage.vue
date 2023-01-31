@@ -92,47 +92,29 @@ const filterByInProgress = () => {
   });
 };
 
-const isFiltering = () => {
+const filter = async () => {
+  filtering.value = true;
+
+  await fetchData();
+
   if (textInputFilter.value !== "" && !doneInputFilter.value && !inProgressInputFilter.value) {
     filterByText();
-
-    return true;
   } else if (textInputFilter.value === "" && doneInputFilter.value && !inProgressInputFilter.value) {
     filterByDone();
-
-    return true;
   } else if (textInputFilter.value === "" && !doneInputFilter.value && inProgressInputFilter.value) {
     filterByInProgress();
-
-    return true;
   } else if (textInputFilter.value === "" && doneInputFilter.value && inProgressInputFilter.value) {
     filterByDone();
     filterByInProgress();
-
-    return true;
   } else if (textInputFilter.value !== "" && doneInputFilter.value && !inProgressInputFilter.value) {
     filterByText();
     filterByDone();
-
-    return true;
   } else if (textInputFilter.value !== "" && !doneInputFilter.value && inProgressInputFilter.value) {
     filterByText();
     filterByInProgress();
-
-    return true;
   } else if (textInputFilter.value !== "" && doneInputFilter.value && inProgressInputFilter.value) {
     filterByText();
-
-    return true;
-  } else {
-    return false;
   }
-};
-
-const filter = async () => {
-  await fetchData();
-
-  filtering.value = isFiltering();
 };
 
 // CRUD for lists functions
