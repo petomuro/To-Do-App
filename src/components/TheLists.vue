@@ -105,7 +105,7 @@ watch(() => props.filtering, (newValue) => {
       :class="{
         errorName: v$.collection.$each.$response.$errors[listIndex].name.length,
       }"
-      class="flex flex-column bg-gray-200 border-round-xl m-3 max-w-30rem">
+      class="flex flex-column bg-gray-200 border-round-xl m-3 w-30rem">
     <div class="flex justify-content-between">
       <div v-if="list?.is_editing_list" class="flex flex-column p-3">
         <label
