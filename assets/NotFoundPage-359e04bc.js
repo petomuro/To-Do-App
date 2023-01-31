@@ -1,0 +1,1 @@
+import{_ as t,o as c,c as s,e}from"./index-0b2df9df.js";const o={},n={class:"flex flex-column justify-content-center align-items-center p-3 h-screen"},a=e("h1",{class:"text-black-alpha-90"},"404",-1),_=e("p",{class:"text-black-alpha-90"}," Not found ",-1),l=[a,_];function r(d,i){return c(),s("div",n,l)}const h=t(o,[["render",r]]);export{h as default};
