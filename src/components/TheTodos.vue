@@ -91,12 +91,10 @@ const toggleDoneTodo = (listId: number, todoId: number) => {
   });
 };
 
-watch(() => props.filtering, (newValue) => {
-  if (!newValue) {
-    todoInputs.value = props.todosData;
-    state.collection = props.todosData;
-    v$ = useVuelidate(rules, state);
-  }
+watch(() => props.todosData, () => {
+  todoInputs.value = props.todosData;
+  state.collection = props.todosData;
+  v$ = useVuelidate(rules, state);
 });
 </script>
 
