@@ -71,7 +71,7 @@ const deleteBoard = async (boardId: number) => {
       const boardIndex = findBoardIndexById(data.value, boardId);
       data.value.splice(boardIndex, 1);
       await deleteBoardFromMockApi(boardId);
-      storeData();
+      await fetchFromMockApi();
     },
     reject: () => {
       // toast.add({severity: "error", summary: "Rejected", detail: "You have rejected", life: 3000});
@@ -137,7 +137,7 @@ const updateBoard = async (e: any) => {
     await updateBoardToMockApi(e);
   }
 
-  storeData();
+  await fetchFromMockApi();
 };
 
 // Load data from mockApi or local storage

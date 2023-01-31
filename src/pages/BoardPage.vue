@@ -139,7 +139,7 @@ const deleteList = async (listId: number) => {
       const listIndex = findListIndexById(listsData.value, listId);
       listsData.value.splice(listIndex, 1);
       await deleteListFromMockApi(listId);
-      storeData();
+      await fetchFromMockApi();
       await filter();
     },
     reject: () => {
@@ -209,7 +209,7 @@ const updateList = async (e: any) => {
     await updateListToMockApi(e);
   }
 
-  storeData();
+  await fetchFromMockApi();
   await filter();
 };
 
@@ -237,7 +237,7 @@ const deleteTodo = async (e: any) => {
       const todoIndex = findTodoIndexById(listsData.value[listIndex].todos, e.todoId);
       listsData.value[listIndex].todos.splice(todoIndex, 1);
       await updateTodoToMockApi(e.listId, listIndex);
-      storeData();
+      await fetchFromMockApi();
       await filter();
     },
     reject: () => {
@@ -275,14 +275,14 @@ const updateTodo = async (e: any) => {
   listsData.value[e.listIndex].todos[e.todoIndex].is_adding_todo = false;
   listsData.value[e.listIndex].todos[e.todoIndex].is_editing_todo = false;
   await updateTodoToMockApi(e.listId, e.listIndex);
-  storeData();
+  await fetchFromMockApi();
   await filter();
 };
 
 const toggleDoneTodo = async (e: any) => {
   listsData.value[e.listIndex].todos[e.todoIndex].is_done_todo = e.is_done_todo;
   await updateTodoToMockApi(e.listId, e.listIndex);
-  storeData();
+  await fetchFromMockApi();
   await filter();
 };
 
