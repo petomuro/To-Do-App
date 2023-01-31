@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {findListIndexById, findTodoIndexById, localizeDate} from "../mixins/utils";
 import {List, Todo} from "../mixins/types";
-import {reactive, ref} from "vue";
+import {reactive, ref, watch} from "vue";
 import {useVuelidate} from "@vuelidate/core";
 import {helpers, required} from "@vuelidate/validators";
 
@@ -9,8 +9,8 @@ import {helpers, required} from "@vuelidate/validators";
 const props = defineProps<{
   listId: number,
   listsData: List[],
-  todosData: Todo[]
-  filtering: boolean,
+  todosData: Todo[],
+  filtering: boolean
 }>();
 
 // Emits declaration
@@ -32,7 +32,7 @@ const rules = {
 const state = reactive({
   collection: props.todosData
 });
-const v$ = useVuelidate(rules, state);
+let v$ = useVuelidate(rules, state);
 const handleSubmit = async () => {
   return await v$.value.$validate();
 };
@@ -90,6 +90,14 @@ const toggleDoneTodo = (listId: number, todoId: number) => {
     is_done_todo: !props.todosData[todoIndex].is_done_todo
   });
 };
+
+watch(() => props.filtering, (newValue) => {
+  if (!newValue) {
+    todoInputs.value = props.todosData;
+    state.collection = props.todosData;
+    v$ = useVuelidate(rules, state);
+  }
+});
 </script>
 
 <template>

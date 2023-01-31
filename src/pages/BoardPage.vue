@@ -131,6 +131,8 @@ const filter = async () => {
     filterByInProgress();
   } else if (textInputFilter.value !== "" && doneInputFilter.value && inProgressInputFilter.value) {
     filterByText();
+  } else {
+    filtering.value = false;
   }
 };
 
@@ -146,8 +148,8 @@ const deleteListFromMockApi = async (listId: number) => {
   }
 };
 
-const deleteList = async (listId: number) => {
-  await confirm.require({
+const deleteList = (listId: number) => {
+  confirm.require({
     message: "Are you sure you want to proceed?",
     header: "Confirmation",
     icon: "pi pi-exclamation-triangle",
@@ -156,7 +158,10 @@ const deleteList = async (listId: number) => {
       listsData.value.splice(listIndex, 1);
       await deleteListFromMockApi(listId);
       await fetchFromMockApi();
-      await filter();
+
+      if (filtering.value) {
+        await filter();
+      }
     },
     reject: () => {
       // toast.add({severity: "error", summary: "Rejected", detail: "You have rejected", life: 3000});
@@ -226,7 +231,10 @@ const updateList = async (e: any) => {
   }
 
   await fetchFromMockApi();
-  await filter();
+
+  if (filtering.value) {
+    await filter();
+  }
 };
 
 // CRUD for todos functions
@@ -243,8 +251,8 @@ const updateTodoToMockApi = async (listId: number, listIndex: number) => {
   }
 };
 
-const deleteTodo = async (e: any) => {
-  await confirm.require({
+const deleteTodo = (e: any) => {
+  confirm.require({
     message: "Are you sure you want to proceed?",
     header: "Confirmation",
     icon: "pi pi-exclamation-triangle",
@@ -254,7 +262,10 @@ const deleteTodo = async (e: any) => {
       listsData.value[listIndex].todos.splice(todoIndex, 1);
       await updateTodoToMockApi(e.listId, listIndex);
       await fetchFromMockApi();
-      await filter();
+
+      if (filtering.value) {
+        await filter();
+      }
     },
     reject: () => {
       // toast.add({severity: "error", summary: "Rejected", detail: "You have rejected", life: 3000});
@@ -292,14 +303,20 @@ const updateTodo = async (e: any) => {
   listsData.value[e.listIndex].todos[e.todoIndex].is_editing_todo = false;
   await updateTodoToMockApi(e.listId, e.listIndex);
   await fetchFromMockApi();
-  await filter();
+
+  if (filtering.value) {
+    await filter();
+  }
 };
 
 const toggleDoneTodo = async (e: any) => {
   listsData.value[e.listIndex].todos[e.todoIndex].is_done_todo = e.is_done_todo;
   await updateTodoToMockApi(e.listId, e.listIndex);
   await fetchFromMockApi();
-  await filter();
+
+  if (filtering.value) {
+    await filter();
+  }
 };
 
 // Load data from mockApi or local storage

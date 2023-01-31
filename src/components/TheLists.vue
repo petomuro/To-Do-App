@@ -2,7 +2,7 @@
 import TheTodos from "./TheTodos.vue";
 import {findListIndexById} from "../mixins/utils";
 import {List} from "../mixins/types";
-import {reactive, ref} from "vue";
+import {reactive, ref, watch} from "vue";
 import {helpers, required} from "@vuelidate/validators";
 import {useVuelidate} from "@vuelidate/core";
 
@@ -28,7 +28,7 @@ const rules = {
 const state = reactive({
   collection: props.listsData
 });
-const v$ = useVuelidate(rules, state);
+let v$ = useVuelidate(rules, state);
 const handleSubmit = async () => {
   return await v$.value.$validate();
 };
@@ -89,6 +89,14 @@ const updateTodo = (e: any) => {
 const toggleDoneTodo = (e: any) => {
   emit("doneTodo", e);
 };
+
+watch(() => props.filtering, (newValue) => {
+  if (!newValue) {
+    listInputs.value = props.listsData;
+    state.collection = props.listsData;
+    v$ = useVuelidate(rules, state);
+  }
+});
 </script>
 
 <template>

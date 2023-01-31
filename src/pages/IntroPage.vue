@@ -62,8 +62,8 @@ const deleteBoardFromMockApi = async (boardId: number) => {
   }
 };
 
-const deleteBoard = async (boardId: number) => {
-  await confirm.require({
+const deleteBoard = (boardId: number) => {
+  confirm.require({
     message: "Are you sure you want to proceed?",
     header: "Confirmation",
     icon: "pi pi-exclamation-triangle",
