@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import TheBoards from "../components/TheBoards.vue";
-import useStore from "../store";
-import {findBoardIndexById} from "../mixins/utils";
+import {boardsLocalStorage, findBoardIndexById} from "../mixins/utils";
 import {Board} from "../mixins/types";
+import useStore from "../store";
 import {useConfirm} from "primevue/useconfirm";
 import {useToast} from "primevue/usetoast";
 import {ref, Ref} from "vue";
@@ -29,8 +29,8 @@ const fetchMockApiData = async () => {
   try {
     const mockApiData = await fetch("https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards");
     data.value = await mockApiData.json() as Board[];
-    store.setBoards(data.value);
-    toast.add({severity: "success", summary: "Success Message", detail: "Data fetched successfully", life: 3000});
+    storeData();
+    // toast.add({severity: "success", summary: "Success Message", detail: "Data fetched successfully", life: 3000});
   } catch (error) {
     toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
   }
@@ -38,8 +38,8 @@ const fetchMockApiData = async () => {
 
 // Load data from mockApi or local storage function
 const fetchData = async () => {
-  if (store.getBoards) {
-    data.value = JSON.parse(store.getBoards) as Board[];
+  if (boardsLocalStorage().value.length > 0) {
+    data.value = boardsLocalStorage().value;
   } else {
     await fetchMockApiData();
   }

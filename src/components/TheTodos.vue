@@ -94,7 +94,7 @@ const toggleDoneTodo = (listId: number, todoId: number) => {
 
 <template>
   <div
-      v-for="(todo, todoIndex) in todosData" :key="todoIndex"
+      v-for="(todo, todoIndex) in todosData" :key="todo.id"
       :class="{errorTitle: v$.collection.$each.$response.$errors[todoIndex].title.length,errorDeadline: v$.collection.$each.$response.$errors[todoIndex].deadline.length}"
       class="flex flex-column justify-content-between bg-gray-300 border-round-xl m-3">
     <div v-if="todo?.is_editing_todo" class="flex flex-column p-3">

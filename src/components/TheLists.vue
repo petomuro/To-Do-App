@@ -93,7 +93,7 @@ const toggleDoneTodo = (e: any) => {
 
 <template>
   <div
-      v-for="(list, listIndex) in listsData" :key="listIndex"
+      v-for="(list, listIndex) in listsData" :key="list.id"
       :class="{
         errorName: v$.collection.$each.$response.$errors[listIndex].name.length,
       }"

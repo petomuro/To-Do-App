@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import TheLists from "../components/TheLists.vue";
-import useStore from "../store";
-import {findListIndexById, findTodoIndexById} from "../mixins/utils";
+import {boardsLocalStorage, findListIndexById, findTodoIndexById, listsLocalStorage} from "../mixins/utils";
 import {Board, List} from "../mixins/types";
+import useStore from "../store";
 import {Ref, ref} from "vue";
 import {useRoute} from "vue-router";
 import {useConfirm} from "primevue/useconfirm";
@@ -11,13 +11,13 @@ import {useToast} from "primevue/usetoast";
 // Local storage
 const store = useStore();
 
-// Router
-const route = useRoute();
-const id = parseInt(route.params.id as string);
-
 // Variables
 const boardsData: Ref<Board> = ref({} as Board);
 const listsData: Ref<List[]> = ref([] as List[]);
+
+// Router
+const route = useRoute();
+const id = parseInt(route.params.id as string);
 
 // Confirm
 const confirm = useConfirm();
@@ -47,9 +47,9 @@ const fetchMockApiData = async () => {
     listsData.value = normalizedListsData;
     storeData();
 
-    if (!filtering.value) {
-      toast.add({severity: "success", summary: "Success Message", detail: "Data fetched successfully", life: 3000});
-    }
+    // if (!filtering.value) {
+    //   toast.add({severity: "success", summary: "Success Message", detail: "Data fetched successfully", life: 3000});
+    // }
   } catch (error) {
     if (!filtering.value) {
       toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
@@ -59,11 +59,9 @@ const fetchMockApiData = async () => {
 
 // Load data from mockApi or local storage function
 const fetchData = async () => {
-  store.$state.boardId = id;
-
-  if (store.getBoards && store.getLists) {
-    boardsData.value = (JSON.parse(store.getBoards) as Board[]).find(board => board.id == id) as Board;
-    listsData.value = (JSON.parse(store.getLists) as List[]);
+  if (boardsLocalStorage().value.length > 0 && listsLocalStorage(id).value.length > 0) {
+    boardsData.value = boardsLocalStorage().value.find(board => board.id == id) as Board;
+    listsData.value = listsLocalStorage(id).value;
   } else {
     await fetchMockApiData();
   }

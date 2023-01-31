@@ -3,14 +3,9 @@ import { Board, List } from "../mixins/types";
 
 export default defineStore("boards", {
   state: () => {
-    return {
-      boardId: -1,
-    };
+    return {};
   },
-  getters: {
-    getBoards: () => localStorage.getItem("boards"),
-    getLists: (state) => localStorage.getItem(`${state.boardId}lists`),
-  },
+  getters: {},
   actions: {
     setBoards: (boards: Board[]) =>
       localStorage.setItem("boards", JSON.stringify(boards)),

@@ -70,7 +70,7 @@ const updateBoard = async (boardId: number) => {
 
 <template>
   <div
-      v-for="(board, boardIndex) in boardsData" :key="boardIndex"
+      v-for="(board, boardIndex) in boardsData" :key="board.id"
       :class="{
         errorName: v$.collection.$each.$response.$errors[boardIndex].title.length,
       }"

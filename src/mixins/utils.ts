@@ -1,4 +1,5 @@
 import { Board, List, Todo } from "./types";
+import { customRef } from "vue";
 
 export function localizeDate(date: string | Date): string {
   if (date !== "") {
@@ -31,4 +32,32 @@ export function findTodoIndexById(todosData: Todo[], todoId: number): number {
   return todosData.findIndex(
     (todo) => parseInt(String(todo.id)) === parseInt(String(todoId))
   );
+}
+
+export function boardsLocalStorage() {
+  return customRef((track, trigger) => ({
+    get: () => {
+      track();
+
+      return JSON.parse(localStorage.getItem("boards") ?? "[]");
+    },
+    set: (boards: Board[]) => {
+      localStorage.setItem("boards", JSON.stringify(boards));
+      trigger();
+    },
+  }));
+}
+
+export function listsLocalStorage(boardId: number) {
+  return customRef((track, trigger) => ({
+    get: () => {
+      track();
+
+      return JSON.parse(localStorage.getItem(`${boardId}lists`) ?? "[]");
+    },
+    set: (lists: List[]) => {
+      localStorage.setItem(`${boardId}lists`, JSON.stringify(lists));
+      trigger();
+    },
+  }));
 }
