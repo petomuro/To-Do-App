@@ -9,6 +9,7 @@ import {useVuelidate} from "@vuelidate/core";
 const props = defineProps<{
   boardsData: Board[]
 }>();
+
 // Emits declaration
 const emit = defineEmits(["deleteBoard", "createBoard", "isEditingBoard", "updateBoard"]);
 
@@ -31,6 +32,8 @@ const handleSubmit = async () => {
 };
 
 // Emits for boards
+const boardInputs = ref(props.boardsData);
+
 const deleteBoard = (boardId: number) => {
   emit("deleteBoard", boardId);
 };
@@ -51,8 +54,6 @@ const isEditingBoard = (boardId: number) => {
     });
   }
 };
-
-const boardInputs = ref(props.boardsData);
 
 const updateBoard = async (boardId: number) => {
   const boardIndex = findBoardIndexById(props.boardsData, boardId);

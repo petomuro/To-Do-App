@@ -7,19 +7,22 @@ import {useConfirm} from "primevue/useconfirm";
 import {useToast} from "primevue/usetoast";
 import {ref, Ref} from "vue";
 
-const data: Ref<Board[]> = ref([] as Board[]);
+// Local storage
 const store = useStore();
 
-// Local storage
-const storeData = () => {
-  store.setBoards(data.value);
-};
+// Variables
+const data: Ref<Board[]> = ref([] as Board[]);
 
 // Confirm
 const confirm = useConfirm();
 
 // Toast
 const toast = useToast();
+
+// Local storage function
+const storeData = () => {
+  store.setBoards(data.value);
+};
 
 // MockApi data fetch function
 const fetchMockApiData = async () => {
@@ -42,10 +45,7 @@ const fetchData = async () => {
   }
 };
 
-// Load data from mockApi or local storage
-await fetchData();
-
-// CRUD for boards
+// CRUD for boards functions
 const deleteBoardFromMockApi = async (boardId: number) => {
   try {
     await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${boardId}`, {
@@ -134,6 +134,9 @@ const updateBoard = async (e: any) => {
 
   storeData();
 };
+
+// Load data from mockApi or local storage
+await fetchData();
 </script>
 
 <template>
@@ -143,7 +146,7 @@ const updateBoard = async (e: any) => {
       <p class="-mt-3">BY PETER MURIN</p>
     </div>
     <div class="flex flex-column">
-      <h2>Hey What's up! What do you want to do today?</h2>
+      <h2>Hey, What's up! What do you want to do today?</h2>
       <h2>Start adding items to your to-do list</h2>
     </div>
   </div>

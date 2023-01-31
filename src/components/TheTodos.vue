@@ -12,6 +12,7 @@ const props = defineProps<{
   todosData: Todo[]
   filtering: boolean,
 }>();
+
 // Emits declaration
 const emit = defineEmits(["deleteTodo", "createTodo", "isEditingTodo", "updateTodo", "doneTodo"]);
 

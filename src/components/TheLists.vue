@@ -34,6 +34,8 @@ const handleSubmit = async () => {
 };
 
 // Emits for lists
+const listInputs = ref(props.listsData);
+
 const deleteList = (listId: number) => {
   emit("deleteList", listId);
 };
@@ -54,8 +56,6 @@ const isEditingList = (listId: number) => {
     });
   }
 };
-
-const listInputs = ref(props.listsData);
 
 const updateList = async (listId: number) => {
   const listIndex = findListIndexById(props.listsData, listId);

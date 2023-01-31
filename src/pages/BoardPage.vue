@@ -8,24 +8,33 @@ import {useRoute} from "vue-router";
 import {useConfirm} from "primevue/useconfirm";
 import {useToast} from "primevue/usetoast";
 
+// Local storage
+const store = useStore();
+
 // Router
 const route = useRoute();
 const id = parseInt(route.params.id as string);
 
+// Variables
 const boardsData: Ref<Board> = ref({} as Board);
 const listsData: Ref<List[]> = ref([] as List[]);
-const store = useStore();
-
-// Local storage
-const storeData = () => {
-  store.setLists(id, listsData.value);
-};
 
 // Confirm
 const confirm = useConfirm();
 
 // Toast
 const toast = useToast();
+
+// Data filtering
+const filtering = ref(false);
+const textInputFilter = ref("");
+const doneInputFilter = ref(false);
+const inProgressInputFilter = ref(false);
+
+// Local storage function
+const storeData = () => {
+  store.setLists(id, listsData.value);
+};
 
 // MockApi data fetch function
 const fetchMockApiData = async () => {
@@ -37,9 +46,14 @@ const fetchMockApiData = async () => {
     boardsData.value = normalizedBoardsData;
     listsData.value = normalizedListsData;
     storeData();
-    toast.add({severity: "success", summary: "Success Message", detail: "Data fetched successfully", life: 3000});
+
+    if (!filtering.value) {
+      toast.add({severity: "success", summary: "Success Message", detail: "Data fetched successfully", life: 3000});
+    }
   } catch (error) {
-    toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
+    if (!filtering.value) {
+      toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
+    }
   }
 };
 
@@ -55,14 +69,7 @@ const fetchData = async () => {
   }
 };
 
-await fetchData();
-
-// Data filtering
-const filtering = ref(false);
-const textInputFilter = ref("");
-const doneInputFilter = ref(false);
-const inProgressInputFilter = ref(false);
-
+// Data filtering functions
 const filterByText = () => {
   listsData.value.forEach((list, index) => {
     listsData.value[index].todos = list.todos.filter(({
@@ -117,9 +124,9 @@ const isFiltering = () => {
     filterByText();
 
     return true;
+  } else {
+    return false;
   }
-
-  return false;
 };
 
 const filter = async () => {
@@ -128,7 +135,7 @@ const filter = async () => {
   filtering.value = isFiltering();
 };
 
-// CRUD for lists
+// CRUD for lists functions
 const deleteListFromMockApi = async (listId: number) => {
   try {
     await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${listId}`, {
@@ -221,7 +228,7 @@ const updateList = async (e: any) => {
   storeData();
 };
 
-// CRUD for todos
+// CRUD for todos functions
 const updateTodoToMockApi = async (listId: number, listIndex: number) => {
   try {
     await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists/${listId}`, {
@@ -290,6 +297,9 @@ const toggleDoneTodo = async (e: any) => {
   await updateTodoToMockApi(e.listId, e.listIndex);
   storeData();
 };
+
+// Load data from mockApi or local storage
+await fetchData();
 </script>
 
 <template>
