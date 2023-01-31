@@ -69,7 +69,7 @@ const deleteBoard = async (boardId: number) => {
       storeData();
     },
     reject: () => {
-      toast.add({severity: "error", summary: "Rejected", detail: "You have rejected", life: 3000});
+      // toast.add({severity: "error", summary: "Rejected", detail: "You have rejected", life: 3000});
     }
   });
 };

@@ -139,7 +139,7 @@ const deleteList = async (listId: number) => {
       storeData();
     },
     reject: () => {
-      toast.add({severity: "error", summary: "Rejected", detail: "You have rejected", life: 3000});
+      // toast.add({severity: "error", summary: "Rejected", detail: "You have rejected", life: 3000});
     }
   });
 };
@@ -216,7 +216,7 @@ const updateTodoToMockApi = async (listId: number, listIndex: number) => {
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify(listsData.value[listIndex])
     });
-    toast.add({severity: "success", summary: "Success Message", detail: "Toast updated successfully", life: 3000});
+    toast.add({severity: "success", summary: "Success Message", detail: "Todo updated successfully", life: 3000});
   } catch (error) {
     toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
   }
@@ -235,7 +235,7 @@ const deleteTodo = async (e: any) => {
       storeData();
     },
     reject: () => {
-      toast.add({severity: "error", summary: "Rejected", detail: "You have rejected", life: 3000});
+      // toast.add({severity: "error", summary: "Rejected", detail: "You have rejected", life: 3000});
     }
   });
 };
