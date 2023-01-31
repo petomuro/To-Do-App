@@ -176,7 +176,7 @@ watch(() => props.todosData, () => {
       </div>
     </div>
   </div>
-  <div v-if="!filtering" class="flex">
+  <div v-if="!listsData[findListIndexById(listsData, listId)].is_adding_list && !filtering" class="flex">
     <TheButton class="m-3" label="+ Add new todo" @click="createTodo(listId)"/>
   </div>
 </template>
