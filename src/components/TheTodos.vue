@@ -137,9 +137,7 @@ watch(() => props.todosData, () => {
       <TheCalendar
           id="deadline" v-model="todoInputs[todoIndex].deadline"
           :class="{'p-invalid':v$.collection.$each.$response.$errors[todoIndex].deadline.length}"
-          date-format="dd.mm.yy"
-          placeholder="Add deadline for todo" show-time
-          @update:model-value="localizeDate(todoInputs[todoIndex].deadline)"/>
+          date-format="dd.mm.yy" placeholder="Add deadline for todo" show-time/>
       <div v-for="error in v$.collection.$each.$response.$errors[todoIndex].deadline" :key="error" class="p-error">
         {{ error.$message.replace('Value', 'Deadline') }}
       </div>
