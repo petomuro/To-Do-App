@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import TheTodos from "./TheTodos.vue";
-import {findListIndexById} from "../mixins/utils";
+import {findListIndexById, getLastIndex} from "../mixins/utils";
 import {List} from "../mixins/types";
 import {reactive, ref, watch} from "vue";
 import {helpers, required} from "@vuelidate/validators";
@@ -51,7 +51,7 @@ const closeEditingNewList = () => {
 const isEditingList = (listId: number) => {
   const listIndex = findListIndexById(props.listsData, listId);
 
-  if (props.listsData[props.listsData.length - 1].is_adding_list) {
+  if (props.listsData[getLastIndex(props.listsData)].is_adding_list) {
     closeEditingNewList();
   } else {
     emit("isEditingList", {

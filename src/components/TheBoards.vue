@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {findBoardIndexById} from "../mixins/utils";
+import {findBoardIndexById, getLastIndex} from "../mixins/utils";
 import {Board} from "../mixins/types";
 import {reactive, ref, watch} from "vue";
 import {helpers, required} from "@vuelidate/validators";
@@ -49,7 +49,7 @@ const closeEditingNewBoard = () => {
 const isEditingBoard = (boardId: number) => {
   const boardIndex = findBoardIndexById(props.boardsData, boardId);
 
-  if (props.boardsData[props.boardsData.length - 1].is_adding_board) {
+  if (props.boardsData[getLastIndex(props.boardsData)].is_adding_board) {
     closeEditingNewBoard();
   } else {
     emit("isEditingBoard", {

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {findListIndexById, findTodoIndexById, localizeDate} from "../mixins/utils";
+import {findListIndexById, findTodoIndexById, getLastIndex, localizeDate} from "../mixins/utils";
 import {List, Todo} from "../mixins/types";
 import {reactive, ref, watch} from "vue";
 import {useVuelidate} from "@vuelidate/core";
@@ -56,7 +56,7 @@ const isEditingTodo = (listId: number, todoId: number) => {
   const listIndex = findListIndexById(props.listsData, listId);
   const todoIndex = findTodoIndexById(props.todosData, todoId);
 
-  if (props.todosData[props.todosData.length - 1].is_adding_todo) {
+  if (props.todosData[getLastIndex(props.todosData)].is_adding_todo) {
     closeEditingNewTodo(listIndex);
   } else {
     emit("isEditingTodo", {
