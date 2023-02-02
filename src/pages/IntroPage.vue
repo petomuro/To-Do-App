@@ -51,7 +51,7 @@ const fetchData = async () => {
     // Fetch them and store to local storage
     await fetchFromMockApi();
   } else {
-    // Else fetch data from local storage
+    // Else get data from local storage
     data.value = boardsLocalStorage().value;
   }
 };
