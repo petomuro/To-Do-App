@@ -1,5 +1,5 @@
 import { Board, List, Todo } from "./types";
-import { customRef } from "vue";
+import { customRef, Ref } from "vue";
 
 export function localizeDate(date: string | Date): string {
   if (date !== "") {
@@ -34,7 +34,7 @@ export function findTodoIndexById(todosData: Todo[], todoId: number): number {
   );
 }
 
-export function boardsLocalStorage() {
+export function boardsLocalStorage(): Ref<Board[]> {
   return customRef((track, trigger) => ({
     get: () => {
       track();
@@ -48,7 +48,7 @@ export function boardsLocalStorage() {
   }));
 }
 
-export function listsLocalStorage(boardId: number) {
+export function listsLocalStorage(boardId: number): Ref<List[]> {
   return customRef((track, trigger) => ({
     get: () => {
       track();
@@ -62,11 +62,15 @@ export function listsLocalStorage(boardId: number) {
   }));
 }
 
-export function convert2DTo1D(data: any[][]) {
-  let newData: Todo[] = [];
+export function convert2DTo1D(data: any[][]): any[] {
+  let newData: any[] = [];
   for (let i = 0; i < data.length; i++) {
     newData = newData.concat(data[i]);
   }
 
   return newData;
+}
+
+export function getLastIndex(data: any[]): number {
+  return data.length - 1;
 }

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import TheBoards from "../components/TheBoards.vue";
-import {boardsLocalStorage, findBoardIndexById} from "../mixins/utils";
+import {boardsLocalStorage, findBoardIndexById, getLastIndex} from "../mixins/utils";
 import {Board} from "../mixins/types";
 import useStore from "../store";
 import {useConfirm} from "primevue/useconfirm";
@@ -26,51 +26,64 @@ const storeData = () => {
 
 // MockApi data fetch functions
 const fetchMockApiData = async () => {
+  // Fetch data from mockApi
   const mockApiData = await fetch("https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards");
 
   return await mockApiData.json() as Board[];
 };
 
 const fetchFromMockApi = async () => {
+  // Try to fetch data from mockApi and store them to local storage
   try {
     data.value = await fetchMockApiData();
     storeData();
     // toast.add({severity: "success", summary: "Success Message", detail: "Data fetched successfully", life: 3000});
   } catch (error) {
+    // Show error toast if some error occurs
     toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
   }
 };
 
 // Load data from mockApi or local storage function
 const fetchData = async () => {
+  // If new data was added to mockApi
   if ((await fetchMockApiData()).length !== boardsLocalStorage().value.length) {
+    // Fetch them and store to local storage
     await fetchFromMockApi();
   } else {
+    // Else fetch data from local storage
     data.value = boardsLocalStorage().value;
   }
 };
 
 // CRUD for boards functions
 const deleteBoardFromMockApi = async (boardId: number) => {
+  // Try delete data from mockApi
   try {
     await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${boardId}`, {
       method: "DELETE"
     });
     toast.add({severity: "success", summary: "Success Message", detail: "Board deleted successfully", life: 3000});
   } catch (error) {
+    // Show error toast if some error occurs
     toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
   }
 };
 
 const deleteBoard = (boardId: number) => {
+  // Show confirmation dialog on data deletion
   confirm.require({
     message: "Are you sure you want to proceed?",
     header: "Confirmation",
     icon: "pi pi-exclamation-triangle",
     accept: async () => {
+      // Find index of board
       const boardIndex = findBoardIndexById(data.value, boardId);
+      // Delete board from reactive variable
       data.value.splice(boardIndex, 1);
+      // Delete board from mockApi
       await deleteBoardFromMockApi(boardId);
+      // Fetch new data from mockApi and store them to local storage
       await fetchFromMockApi();
     },
     reject: () => {
@@ -80,29 +93,37 @@ const deleteBoard = (boardId: number) => {
 };
 
 const createBoard = async () => {
+  // Push new board to reactive variable
   data.value.push({
     id: data.value.length + 1,
     title: "",
     is_adding_board: true,
     is_editing_board: false,
   });
-  const lastBoardIndex = data.value.length - 1;
+  // Get last index
+  const lastBoardIndex = getLastIndex(data.value);
+  // Start editing new board
   await isEditingBoard({boardIndex: lastBoardIndex, is_editing_board: true});
 };
 
 const closeEditingNewBoard = () => {
+  // Pop new board from reactive variable
   data.value.pop();
 };
 
 const isEditingBoard = async (e: any) => {
+  // Start/stop editing
   data.value[e.boardIndex].is_editing_board = e.is_editing_board;
 
+  // If editing is false
   if (!e.is_editing_board) {
+    // Fetch data from mockApi or local storage
     await fetchData();
   }
 };
 
 const createBoardInMockApi = async (e: any) => {
+  // Try to create new board on mockApi
   try {
     await fetch("https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards", {
       method: "POST",
@@ -113,11 +134,13 @@ const createBoardInMockApi = async (e: any) => {
     });
     toast.add({severity: "success", summary: "Success Message", detail: "Board created successfully", life: 3000});
   } catch (error) {
+    // Show error toast if some error occurs
     toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
   }
 };
 
 const updateBoardToMockApi = async (e: any) => {
+  // Try to update board to mockApi
   try {
     await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${e.boardId}`, {
       method: "PUT",
@@ -126,21 +149,29 @@ const updateBoardToMockApi = async (e: any) => {
     });
     toast.add({severity: "success", summary: "Success Message", detail: "Board updated successfully", life: 3000});
   } catch (error) {
+    // Show error toast if some error occurs
     toast.add({severity: "error", summary: "Error Message", detail: error, life: 3000});
   }
 };
 
 const updateBoard = async (e: any) => {
+  // Store new board data to reactive variable
   data.value[e.boardIndex] = e.newBoard;
+  // Stop editing
   data.value[e.boardIndex].is_editing_board = false;
 
+  // If adding board is true
   if (data.value[e.boardIndex].is_adding_board) {
+    // Clear is adding board
     data.value[e.boardIndex].is_adding_board = false;
+    // Create new board on mockApi
     await createBoardInMockApi(e);
   } else {
+    // Else update board to mockApi
     await updateBoardToMockApi(e);
   }
 
+  // Fetch data from mockApi and store them to local storage
   await fetchFromMockApi();
 };
 
