@@ -5,8 +5,8 @@ import {
   convert2DTo1D,
   findListIndexById,
   findTodoIndexById,
-  listsLocalStorage,
-  getLastIndex
+  getLastIndex,
+  listsLocalStorage
 } from "../mixins/utils";
 import {Board, List} from "../mixins/types";
 import useStore from "../store";
@@ -44,7 +44,7 @@ const storeData = () => {
 };
 
 // MockApi data fetch functions
-const fetchMockApiData = async () => {
+const fetchMockApiData = async (): Promise<List[]> => {
   // Fetch data from mockApi
   const mockApiListsData = await fetch(`https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards/${id}/lists`);
 
@@ -72,7 +72,7 @@ const fetchFromMockApi = async () => {
 };
 
 // Check if mockApi has som new data
-const hasNewData = async () => {
+const hasNewData = async (): Promise<boolean> => {
   // Fetch data from mockApi
   const mockApiLists = (await fetchMockApiData());
   // Get data from local storage

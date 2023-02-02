@@ -1,7 +1,7 @@
 import { Board, List, Todo } from "./types";
 import { customRef, Ref } from "vue";
 
-export function localizeDate(date: string | Date): string {
+export const localizeDate = (date: string | Date): string => {
   if (date !== "") {
     if (typeof date === "string") {
       return new Date(date).toLocaleString("sk-SK");
@@ -11,30 +11,36 @@ export function localizeDate(date: string | Date): string {
   } else {
     return "";
   }
-}
+};
 
-export function findBoardIndexById(
+export const findBoardIndexById = (
   boardsData: Board[],
   boardId: number
-): number {
+): number => {
   return boardsData.findIndex(
     (board) => parseInt(String(board.id)) === parseInt(String(boardId))
   );
-}
+};
 
-export function findListIndexById(listsData: List[], listId: number): number {
+export const findListIndexById = (
+  listsData: List[],
+  listId: number
+): number => {
   return listsData.findIndex(
     (list) => parseInt(String(list.id)) === parseInt(String(listId))
   );
-}
+};
 
-export function findTodoIndexById(todosData: Todo[], todoId: number): number {
+export const findTodoIndexById = (
+  todosData: Todo[],
+  todoId: number
+): number => {
   return todosData.findIndex(
     (todo) => parseInt(String(todo.id)) === parseInt(String(todoId))
   );
-}
+};
 
-export function boardsLocalStorage(): Ref<Board[]> {
+export const boardsLocalStorage = (): Ref<Board[]> => {
   return customRef((track, trigger) => ({
     get: () => {
       track();
@@ -46,9 +52,9 @@ export function boardsLocalStorage(): Ref<Board[]> {
       trigger();
     },
   }));
-}
+};
 
-export function listsLocalStorage(boardId: number): Ref<List[]> {
+export const listsLocalStorage = (boardId: number): Ref<List[]> => {
   return customRef((track, trigger) => ({
     get: () => {
       track();
@@ -60,17 +66,17 @@ export function listsLocalStorage(boardId: number): Ref<List[]> {
       trigger();
     },
   }));
-}
+};
 
-export function convert2DTo1D(data: any[][]): any[] {
+export const convert2DTo1D = (data: any[][]): any[] => {
   let newData: any[] = [];
   for (let i = 0; i < data.length; i++) {
     newData = newData.concat(data[i]);
   }
 
   return newData;
-}
+};
 
-export function getLastIndex(data: any[]): number {
+export const getLastIndex = (data: any[]): number => {
   return data.length - 1;
-}
+};

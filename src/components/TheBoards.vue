@@ -27,7 +27,7 @@ const state = reactive({
   collection: props.boardsData
 });
 let v$ = useVuelidate(rules, state);
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<boolean> => {
   return await v$.value.$validate();
 };
 

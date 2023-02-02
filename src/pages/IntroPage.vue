@@ -25,7 +25,7 @@ const storeData = () => {
 };
 
 // MockApi data fetch functions
-const fetchMockApiData = async () => {
+const fetchMockApiData = async (): Promise<Board[]> => {
   // Fetch data from mockApi
   const mockApiData = await fetch("https://63d3f5218d4e68c14eb69fe7.mockapi.io/api/v1/boards");
 
