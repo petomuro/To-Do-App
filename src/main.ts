@@ -23,7 +23,7 @@ import "primeicons/primeicons.css";
 
 import "primeflex/primeflex.css";
 
-import "./style.css";
+import "./assets/style.css";
 
 const pinia = createPinia();
 const app = createApp(App);
